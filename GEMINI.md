@@ -36,7 +36,7 @@ If any of these are missing or empty, ask the user before guessing.
 
 ## First-Time Setup
 
-If this is a fresh workspace (README still says `SYSTEM_NAME`, `repos.yaml` has an empty
+If this is a fresh workspace (README still says `rag-system`, `repos.yaml` has an empty
 `services:` list, `docs/ai/SYSTEM.md` is still a stub):
 
 1. Ask the user for the system name, description, and what they're building.

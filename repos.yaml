@@ -1,43 +1,42 @@
-# SYSTEM_NAME — repository manifest
+# rag-system — repository manifest (FILLED EXAMPLE)
 #
-# Single source of truth for which repos make up this system, how they relate,
-# and how to fetch them. `workspace.sh` reads this file for every command.
-#
-# Child repos are created from the single-repo Python template and cloned into
-# repos/ (gitignored). Each one stays a fully independent git repository.
+# This is what repos.yaml looks like for a real system: charlie's local RAG stack,
+# four independent repos already living in ~/projects, joined only by HTTP + a shared
+# vault note format. Use it as a reference for filling in your own.
 
-system: SYSTEM_NAME
-description: SYSTEM_DESCRIPTION
+system: rag-system
+description: A local, single-workstation retrieval-augmented generation stack.
 
-# The single-repo template every new service is scaffolded from.
-# `./workspace.sh new <name> "<desc>"` clones this and runs its init-project.sh.
 template:
   url: https://github.com/charlieLucke/python-template.git
 
-# Default git host/owner used to expand short repo names into clone URLs.
 defaults:
   owner: charlieLucke
   host: github.com
   branch: main
 
-# The services that make up the system.
-# - name:     repo + directory name under repos/
-#   role:     one-line responsibility (mirrored into ROUTING.md)
-#   url:      clone URL (optional; defaults to host/owner/name.git)
-#   path:     checkout path (optional; defaults to repos/<name>)
-#   consumes: which other services this one calls (for the dependency graph)
-#   exposes:  contract file under contracts/ this service publishes (optional)
-#   contract_source: live OpenAPI JSON URL or spec file to diff `exposes` against
-#             for drift (optional; used by `./workspace.sh contracts`)
-#   port:     local port, if it runs a service (optional)
-#   pin:      commit SHA to pin to (optional; managed via `workspace.sh lock`)
-services: []
-  # - name: example-api
-  #   role: HTTP API and domain logic
-  #   consumes: []
-  #   exposes: contracts/example-api.openapi.yaml
-  #   port: 8000
-  # - name: example-worker
-  #   role: Background job processor
-  #   consumes: [example-api]
-  #   port: null
+services:
+  - name: titan
+    role: RAG engine — ingest (Docling → Late Chunking → BGE-M3) + hybrid search over Qdrant
+    consumes: []                       # bottom of the stack; talks only to local infra (Qdrant, GPU)
+    exposes: contracts/titan.openapi.yaml
+    contract_source: http://127.0.0.1:8765/openapi.json  # live spec to diff for drift
+    port: 8765                         # FastAPI, bound 127.0.0.1 (local only by design)
+
+  - name: brain-mcp
+    role: Bridge to Claude — MCP server + vault watcher that indexes notes into titan
+    consumes: [titan]                  # calls titan POST /search, /ingest/file, etc.
+    exposes: contracts/brain-mcp.tools.json
+    port: 9100                         # MCP over HTTP, 0.0.0.0 (reached via Tailscale Funnel)
+
+  - name: brain-dashboard
+    role: Web control panel — service status, live logs, start/stop of the RAG stack
+    consumes: [titan]                  # reads titan GET /health; controls systemd + Qdrant
+    exposes: null                      # exposes a human web UI, not consumed by other repos
+    port: 9200
+
+  - name: obsidian-inbox-watcher
+    role: Document frontend — TXT/PDF/DOCX/URL → Gemini → Markdown note in the vault inbox
+    consumes: []                       # produces vault notes; brain-mcp's watcher picks them up
+    exposes: null                      # contract is the vault note format (domain frontmatter)
+    port: null                         # systemd worker, no HTTP port

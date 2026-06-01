@@ -1,4 +1,4 @@
-# Shared ruff config for every service in SYSTEM_NAME.
+# Shared ruff config for every service in rag-system.
 #
 # Child repos keep their own pyproject.toml [tool.ruff] (from the single-repo template);
 # this file is the canonical reference they must stay aligned with. If a repo needs to

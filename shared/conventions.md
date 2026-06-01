@@ -1,6 +1,6 @@
 # Shared Conventions
 
-> The conventions that must be identical across every service in `SYSTEM_NAME`. Each child
+> The conventions that must be identical across every service in `rag-system`. Each child
 > repo's `docs/ai/CONTEXT.md` should say "Conventions: see workspace `shared/conventions.md`"
 > rather than copying these, so there is one source of truth. Edit here only.
 

@@ -1,38 +1,62 @@
-# Contracts — the inter-service source of truth
+# Contracts — rag-system (FILLED EXAMPLE)
 
-> The repos are decoupled; these contracts are the only thing connecting them. If a repo's
-> behavior at a boundary isn't written here (and, where possible, in `contracts/` as a
-> machine-readable file), it does not officially exist. Change here = change everywhere.
-
-## How to read this
-
-- One section per **published interface** (an HTTP API, a message/event schema, a CLI
-  another repo calls, a shared file format).
-- Each names its **provider** (the repo that owns/serves it) and its **consumers** (repos
-  that depend on it — must match the `consumes:` edges in `repos.yaml`).
-- The machine-readable form (OpenAPI / JSON Schema) lives in `contracts/`; this file is
-  the human-readable summary and the place to record *why* the contract is shaped this way.
-
-## Change protocol (non-negotiable)
-
-1. A contract change is an **Opus-level decision** — never improvise one mid-implementation.
-2. Update the machine-readable file in `contracts/` **and** this summary.
-3. Update **every** consumer listed below, in the agreed landing order (provider first
-   for additive changes; consumers first when removing a field they read).
-4. Run `./workspace.sh contracts` then `./workspace.sh check` — both must be green.
+> The two real coupling surfaces in this system: titan's HTTP API and brain-mcp's MCP
+> tools. Plus one implicit contract — the vault note format — that ties three repos together.
 
 ---
 
-## Contract: <name>
+## Contract: titan HTTP API
 
-- **Provider:** repos/<name>
-- **Consumers:** repos/<a>, repos/<b>
-- **Machine-readable:** `contracts/<name>.openapi.yaml`
-- **Transport:** *(HTTP / queue / file / CLI)*
+- **Provider:** repos/titan
+- **Consumers:** repos/brain-mcp (search + ingest), repos/brain-dashboard (`/health` only)
+- **Machine-readable:** `contracts/titan.openapi.yaml`
+- **Transport:** HTTP, `127.0.0.1:8765` (local only)
 
 ### Surface
-*(Endpoints / messages / fields. Keep it tight — the machine-readable file is authoritative
-for exact shapes; this is the "what it means" layer.)*
+- `GET /health` — BGE-M3 loaded? Qdrant reachable? VRAM use, collection name, ColBERT dim.
+- `POST /search` — hybrid search `{query, domain?, top_k}` → ranked chunks.
+- `POST /ingest/file` — (re)index one file.
+- `GET /domains` — domains with chunk counts.
+- `GET /notes` — indexed notes grouped by file.
+- `POST /find_related` — semantically related documents.
+- `DELETE /chunks` — remove a file's chunks.
 
 ### Invariants & gotchas
-*(Versioning policy, backward-compat rules, fields that must never change meaning, etc.)*
+- titan binds **127.0.0.1 only** — single-user, no auth/TLS at this layer by design.
+- Re-ingest is **upsert-before-delete** (new `run_id`); consumers must not assume an atomic
+  swap window.
+- `domain` is an optional filter on `/search` and the cache-invalidation key on ingest.
+
+---
+
+## Contract: brain-mcp MCP tools
+
+- **Provider:** repos/brain-mcp
+- **Consumers:** Claude (via the custom connector over Tailscale Funnel)
+- **Machine-readable:** `contracts/brain-mcp.tools.json`
+- **Transport:** MCP over HTTP, `:9100`, GitHub-OAuth gated (allowlist `charlieLucke`)
+
+### Surface
+Six tools: `query_knowledge`, `ingest_note`, `list_domains`, `find_related`, `list_notes`,
+`delete_note`. Each maps to one or more titan HTTP calls.
+
+### Invariants & gotchas
+- Query decomposition is **not** used on the MCP path (Claude decomposes itself).
+- Tool results must stay stable for the connector; renaming a tool breaks Claude's calls.
+- "Titan unreachable" from a tool means the titan→Qdrant chain below is down, not an MCP bug.
+
+---
+
+## Contract: vault note format (implicit)
+
+- **Provider/Writers:** repos/obsidian-inbox-watcher (and the human editing notes)
+- **Consumers:** repos/brain-mcp (watcher → titan `/ingest/file`), repos/titan (domain filter)
+- **Machine-readable:** none — enforced by convention, documented here.
+
+### Surface
+A Markdown note with YAML frontmatter containing a `domain:` field (`lernen` / `projekte` /
+`system` / `business`). `indexed: false` opts a note out (and removes its chunks).
+
+### Invariants & gotchas
+- **No `domain:` → not indexed.** This is the single most important shared invariant.
+- Changing the allowed domain values touches all three repos → a workspace-level change.

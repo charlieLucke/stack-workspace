@@ -1,0 +1,93 @@
+# Illustrative OpenAPI sketch for titan's HTTP API, reconstructed from the project notes.
+# In a real system this would be generated from the FastAPI app (titan exposes /openapi.json)
+# and `./workspace.sh contracts` would diff this file against the live spec to detect drift.
+openapi: 3.1.0
+info:
+  title: titan
+  version: "0.1.0"
+  description: Local RAG engine — hybrid search and ingest over Qdrant.
+servers:
+  - url: http://127.0.0.1:8765
+paths:
+  /health:
+    get:
+      summary: Liveness and readiness
+      responses:
+        "200":
+          description: Status of model, Qdrant, VRAM, collection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  model_loaded: { type: boolean }
+                  qdrant_reachable: { type: boolean }
+                  vram_mb: { type: number }
+                  collection: { type: string }
+                  colbert_dim: { type: integer }
+  /search:
+    post:
+      summary: Hybrid search (dense + sparse + ColBERT, RRF)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string }
+                domain: { type: string, nullable: true }
+                top_k: { type: integer, default: 10 }
+      responses:
+        "200":
+          description: Ranked chunks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text: { type: string }
+                        score: { type: number }
+                        domain: { type: string }
+                        source: { type: string }
+  /ingest/file:
+    post:
+      summary: (Re)index a single file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path: { type: string }
+                domain: { type: string, nullable: true }
+      responses:
+        "200": { description: Ingest summary (chunks upserted) }
+  /domains:
+    get:
+      summary: Domains with chunk counts
+      responses:
+        "200": { description: List of domains }
+  /notes:
+    get:
+      summary: Indexed notes grouped by file
+      responses:
+        "200": { description: Notes with domain + chunk count }
+  /find_related:
+    post:
+      summary: Semantically related documents
+      responses:
+        "200": { description: Related documents }
+  /chunks:
+    delete:
+      summary: Remove a file's chunks
+      responses:
+        "200": { description: Deletion summary }

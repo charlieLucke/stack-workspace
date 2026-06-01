@@ -1,36 +1,7 @@
-# SYSTEM_NAME
+# rag-system
 
-SYSTEM_DESCRIPTION
+A local, single-workstation retrieval-augmented generation stack
 
-<!-- TEMPLATE-USAGE:START (this section is removed by init-workspace.sh) -->
-## Creating a system from this template
-
-This is a **multi-repo workspace template**. It does not hold application code itself —
-it is the coordination layer ("meta-repo") that sits above a set of service repos, each
-of which is created from the single-repo
-[python-template](https://github.com/charlieLucke/python-template).
-
-It gives a system of independent repos one shared brain: a system-level `docs/ai/`,
-a contract registry, cross-repo plans/handoff, DRY conventions, and one quality gate.
-
-To start a new system from it:
-
-```bash
-./init-workspace.sh my-system "A short description of the system"
-```
-
-That replaces the `SYSTEM_NAME` / `SYSTEM_DESCRIPTION` placeholders, initializes a fresh
-git repo, removes this section, and deletes the script itself. Then:
-
-```bash
-./workspace.sh new api   "HTTP API and domain logic"     # scaffold first service
-./workspace.sh new worker "Background job processor"      # scaffold another
-./workspace.sh check                                      # system-wide quality gate
-```
-
-A worked example of a filled-in system (a local RAG stack) lives in
-[`examples/rag-system/`](examples/rag-system/).
-<!-- TEMPLATE-USAGE:END -->
 
 ## What this is
 
