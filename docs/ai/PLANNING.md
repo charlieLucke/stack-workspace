@@ -7,7 +7,9 @@
 > cheaper implementer (Sonnet) through the workspace `CLAUDE.md`.
 >
 > You (Opus) do **not** write production code here. You produce two artifacts: a **plan**
-> and an **implementer prompt**.
+> and an **implementer prompt**. If you can write files, save the plan under
+> `docs/ai/plans/`; if you can't (a plain chat), output **both** as fenced markdown blocks
+> for the user to save at the stated path.
 
 ---
 
@@ -29,13 +31,21 @@ a published contract is your decision, not the implementer's.**
 2. `docs/ai/ROUTING.md` — which repo owns what; where a change belongs.
 3. `docs/ai/CONTRACTS.md` + `contracts/` — the boundaries between repos.
 4. `repos.yaml` — the manifest (the `consumes`/`exposes` edges as data).
-5. For each repo the task touches: `repos/<name>/docs/ai/CONTEXT.md` **and the actual code
+5. `docs/ai/DECISIONS.md` (workspace) **and** the touched repo's `docs/ai/DECISIONS.md` —
+   prior decisions you must not silently contradict or re-litigate.
+6. `docs/ai/CURRENT_TASK.md` + `HANDOFF.md` — is a cross-repo feature already in flight?
+   Don't collide with it; build on it, or finish it first.
+7. For each repo the task touches: `repos/<name>/docs/ai/CONTEXT.md` **and the actual code
    you'll plan against.**
 
 > **Read the real code before planning. Never plan against an assumed API.** The feature
 > you're about to design may already exist, or the function you mean to mirror may work
 > differently than you remember. (Real example: a planned `GET /stats` endpoint turned out
 > to already exist — caught only because the planner opened `routes.py` first.)
+>
+> **No repo access?** In a plain chat without the filesystem you cannot read these — so do
+> **not** plan blind. Ask the user to paste the files above and the specific code you'll
+> mirror. Planning against assumed APIs is the exact failure mode this brief exists to prevent.
 
 ---
 
@@ -48,7 +58,8 @@ features are valid proposals; novelty and value matter more than safety here.
 
 For each candidate, state honestly: its **value**, its **blast radius** (additive /
 breaking a consumed contract / new repo boundary), and its **rough size**. That lets the
-user choose with eyes open. Then recommend one and let the user pick.
+user choose with eyes open. Then recommend one and let the user pick. Park the candidates
+they don't choose in `docs/ai/IDEAS.md` so good ideas aren't lost.
 
 Two situational notes (guidance, not constraints):
 - **If the user explicitly wants a low-risk smoke test of the workflow** (e.g. the first
@@ -65,7 +76,10 @@ files/functions/patterns to mirror, the schemas to reuse, and resolve every edge
 (status codes, empty/unknown input, error handling). This is where a plan earns its value.
 
 ### 3. Classify the altitude
-- Touches **one repo's internals only** → the plan lives in `repos/<name>/docs/ai/plans/`.
+- Touches **one repo's internals only** (no contract, no other repo) → the plan lives in
+  `repos/<name>/docs/ai/plans/`, and you can plan *and* implement entirely inside that repo
+  under its own `CLAUDE.md`. Don't impose the full workspace ceremony on a trivial local
+  change — the layers below earn their keep only at boundaries.
 - Touches a **contract or several repos** → the plan lives in the **workspace**
   `docs/ai/plans/`, and the change is a workspace-level decision.
 - **A published-interface change is ALWAYS workspace-level**, even if the code edit is in
@@ -144,9 +158,16 @@ This section is what makes the implementer mechanical instead of guessing.
 ## Steps
 Per repo, concrete: exact files, functions, where to insert, what to mirror.
 
-## Verification (the gate)
-The exact commands: `cd repos/<x> && make check`, then `./workspace.sh check`, and — for
-endpoints/contracts — a real run with services up + `./workspace.sh contracts`.
+## Tracking   (multi-repo features only)
+The implementer points the workspace `CURRENT_TASK.md` at this plan and each affected repo's
+`CURRENT_TASK.md` back at it, and writes `HANDOFF.md` if interrupted (workspace rule 2).
+
+## Verification
+- **Static gate:** `cd repos/<x> && make check`, then `./workspace.sh check`.
+- **Runtime proof** (endpoints/contracts): name which services/infra must be **up** to
+  verify (e.g. "titan + Qdrant running"), the integration tests to run, and
+  `./workspace.sh contracts`. Static green ≠ runtime verified — name the prerequisites so
+  they actually get run, not skipped.
 
 ## Out of scope
 What this deliberately does NOT do.
@@ -168,7 +189,9 @@ What this deliberately does NOT do.
   so the implementer never improvises architecture.
 - Reuse before inventing: name the existing schema/util/pattern to mirror.
 - The gate is `./workspace.sh check`; for an endpoint/contract, insist on a **real run** with
-  the services up (static green ≠ runtime verified).
+  the services up (static green ≠ runtime verified) — and name *which* services must be up.
+- For a multi-repo feature, wire tracking: workspace `CURRENT_TASK.md` ↔ each repo's
+  `CURRENT_TASK.md` ↔ this plan (workspace rule 2).
 - One isolated commit per repo; never mix a contract change with unrelated refactoring.
 
 ---
@@ -189,3 +212,7 @@ docs/ai/CONTEXT.md. Stick to the plan; flag any deviation explicitly rather than
 Finish: `cd repos/<NAME> && make check` must be green, and from the workspace
 `./workspace.sh check`. Commit per repo separately (feat:/docs:), do NOT push — I review first.
 ```
+
+For a **genuinely single-repo task with no contract impact**, skip the workspace framing:
+launch the implementer in `repos/<NAME>` and point it at that repo's own `CLAUDE.md` and
+`docs/ai/CONTEXT.md`. The workspace prompt above is for boundary-crossing work.
