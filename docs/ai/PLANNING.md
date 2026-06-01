@@ -42,12 +42,22 @@ a published contract is your decision, not the implementer's.**
 ## The workflow
 
 ### 1. Brainstorm
-Given the user's intent, propose **2–4 candidate tasks**. Each should be: small enough for
-one implementer session, genuinely useful, verifiable (`make check` can prove it), and
-low-risk (prefer *additive* over *breaking*). Say which one best serves the system and which
-best *exercises* the workflow, recommend one, and let the user pick. A good test/first task
-is an **additive endpoint or field**: it forces the implementer through "endpoint → contract"
-without any consumer being able to break.
+Given the user's intent, propose **2–4 candidate directions**. Brainstorm at the ambition
+the goal deserves — **do not shrink the idea to make it safe.** Bold, risky, or large
+features are valid proposals; novelty and value matter more than safety here.
+
+For each candidate, state honestly: its **value**, its **blast radius** (additive /
+breaking a consumed contract / new repo boundary), and its **rough size**. That lets the
+user choose with eyes open. Then recommend one and let the user pick.
+
+Two situational notes (guidance, not constraints):
+- **If the user explicitly wants a low-risk smoke test of the workflow** (e.g. the first
+  run on a new system), an **additive endpoint or field** is ideal: it forces the
+  implementer through "change → contract" while nothing can break.
+- **Otherwise, risk is fine — you manage it, you don't avoid it.** Match the plan's rigor
+  to the risk: a breaking or far-reaching change just means more decisions pinned down, an
+  explicit consumer-migration order, and possibly **splitting the work into staged
+  sub-plans** that each land green. (See "Risk handling" below.)
 
 ### 2. Ground it in the real code
 Open the actual files. Confirm the task doesn't already exist. Identify the exact
@@ -60,6 +70,8 @@ files/functions/patterns to mirror, the schemas to reuse, and resolve every edge
   `docs/ai/plans/`, and the change is a workspace-level decision.
 - **A published-interface change is ALWAYS workspace-level**, even if the code edit is in
   one repo — because the contract file and any consumers live across the boundary.
+- Needs a **whole new service** → it's not an edit to an existing repo at all. See
+  "When the plan is a new repo" below.
 
 ### 4. Write the plan
 Save to `docs/ai/plans/<YYYY-MM-DD>_<slug>.md` using the format below.
@@ -69,6 +81,46 @@ End your reply with the paste-ready prompt (template at the bottom) that the use
 a fresh implementer (Sonnet) chat.
 
 ---
+
+## When the plan is a new repo
+
+Sometimes a new idea doesn't belong *inside* any existing repo — it's a **new service**.
+That's a first-class planning outcome, especially when a big new capability joins the system.
+
+**Create a new repo when** the idea is a new *bounded responsibility* with its own lifecycle:
+it deploys/scales/releases independently, owns its own data or model, and talks to the rest
+of the system through a clean contract. **Keep it inside an existing repo when** it shares
+that repo's deployment, data, and ownership — then it's a module, not a service. (Resist
+premature microservices: "this feature is big" is not, by itself, a reason for a new repo —
+*independent lifecycle/ownership* is.)
+
+Creating a repo is a **workspace-level decision** — record it in `docs/ai/DECISIONS.md` (new
+module boundary, with the reasoning). The plan must then cover:
+
+1. `./workspace.sh new <name> "<role>"` — scaffolds the repo from the single-repo template.
+2. **Design its contract first:** what it exposes and consumes → `contracts/<name>.*` +
+   a `CONTRACTS.md` entry. The boundary is designed before the code exists.
+3. Register it in `repos.yaml` (role, `consumes`, `exposes`, port) and update `SYSTEM.md`
+   (graph + data flow) and `ROUTING.md` (ownership).
+4. `./workspace.sh adopt <name>` — drops its `SYSTEM_LINK.md`.
+5. Name the existing repos that must change to talk to it (its consumers/providers) and the
+   landing order — the new service usually lands and goes green *before* anyone depends on it.
+
+Then write the implementation plan for the new repo's first slice like any other plan.
+
+## Risk handling
+
+The system is built to *absorb* risk, not avoid it — use that. For a bold or breaking change:
+
+- **Name the blast radius** explicitly in the plan: which contracts change, which consumers
+  break, what data/migration is involved.
+- **Order for safety:** additive changes land provider-first; **removing or changing** a
+  field consumers read lands **consumer-first** (stop reading it), then provider.
+- **Stage it.** A large feature becomes several sub-plans, each of which leaves
+  `./workspace.sh check` green. Never plan a step that requires the system to be red in
+  between.
+- **Escalate the genuinely dangerous parts** (auth, money, data migration, concurrency) as
+  their own decisions in `DECISIONS.md` — don't bury them inside an implementer step.
 
 ## Plan format (use exactly this skeleton)
 
