@@ -18,6 +18,7 @@
 - `POST /ingest/file` — (re)index one file.
 - `GET /domains` — domains with chunk counts.
 - `GET /notes` — indexed notes grouped by file.
+- `GET /domains/{domain}/notes` — notes for a single domain; unknown domain → 200 with empty list.
 - `POST /find_related` — semantically related documents.
 - `DELETE /chunks` — remove a file's chunks.
 

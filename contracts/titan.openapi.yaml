@@ -76,6 +76,33 @@ paths:
       summary: Domains with chunk counts
       responses:
         "200": { description: List of domains }
+  /domains/{domain}/notes:
+    get:
+      summary: Indexed notes for a single domain
+      parameters:
+        - name: domain
+          in: path
+          required: true
+          schema: { type: string }
+          description: Domain label to filter by (e.g. lernen, trading)
+      responses:
+        "200":
+          description: Notes within the specified domain (empty list for unknown domains)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        source_path: { type: string }
+                        domain: { type: string }
+                        chunk_count: { type: integer }
+                  total: { type: integer }
+        "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /notes:
     get:
       summary: Indexed notes grouped by file
