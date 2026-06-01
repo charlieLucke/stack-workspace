@@ -36,7 +36,7 @@ If any of these are missing or empty, ask the user before guessing.
 
 ## First-Time Setup
 
-If this is a fresh workspace (README still says `rag-system`, `repos.yaml` has an empty
+If this is a fresh workspace (README still says `SYSTEM_NAME`, `repos.yaml` has an empty
 `services:` list, `docs/ai/SYSTEM.md` is still a stub):
 
 1. Ask the user for the system name, description, and what they're building.
@@ -115,6 +115,7 @@ docs/ai/
 ├── CURRENT_TASK.md   # Active cross-repo feature
 ├── HANDOFF.md        # System handoff (which repos at which commit)
 ├── IDEAS.md          # Out-of-scope ideas
+├── PLANNING.md       # Opus planning brief — load into a planning chat to author plans
 └── plans/            # Opus plans that coordinate multiple repos
 contracts/            # Machine-readable contracts (OpenAPI, JSON Schema, …)
 shared/               # Convention fragments DRY-pulled into each child repo
