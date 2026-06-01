@@ -95,6 +95,22 @@ cmd_new() {  ## Scaffold a new service from the template and register it: new <n
   printf '%s\n' "Next: add it to repos.yaml under services: (name/role/consumes/exposes/port), then ./workspace.sh check"
 }
 
+cmd_adopt() {  ## Link existing child repos into the system: generate their docs/ai/SYSTEM_LINK.md
+  # For repos created outside `new` (or pre-existing). Generates SYSTEM_LINK.md from the
+  # manifest + shared/, and adds a 'read SYSTEM_LINK.md' line to each child's CLAUDE.md.
+  # Idempotent and additive — it never touches the child's existing code. Pass a service
+  # name to adopt just one; no arg adopts all.
+  local only="${1:-}"
+  for name in $(MANIFEST names); do
+    [ -z "$only" ] || [ "$only" = "$name" ] || continue
+    local path; path="$(MANIFEST path "$name")"
+    require_repo "$path" "$name" || continue
+    hr "adopt $name"
+    python3 "$ROOT/scripts/adopt.py" "$path" "$name"
+  done
+  ok "adoption complete (review the new files, then commit them in each child repo)"
+}
+
 cmd_sync_shared() {  ## Refresh the shared agent-rules block inside every child's SYSTEM_LINK.md
   local block; block="$(cat shared/agent-rules.md)"
   for name in $(MANIFEST names); do
@@ -205,6 +221,7 @@ main() {
     status) cmd_status "$@";;
     foreach) cmd_foreach "$@";;
     new) cmd_new "$@";;
+    adopt) cmd_adopt "$@";;
     sync-shared) cmd_sync_shared "$@";;
     check) cmd_check "$@";;
     contracts) cmd_contracts "$@";;

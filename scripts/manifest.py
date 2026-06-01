@@ -12,6 +12,7 @@ Subcommands (all read repos.yaml in the current working directory):
   path <name>           -> checkout path under repos/
   field <name> <key>    -> a single field value ("" if unset)
   consumers <name>      -> names of services that list <name> in `consumes`
+  consumes <name>       -> names of services that <name> lists in `consumes`
   graph                 -> "consumer -> provider" edges, one per line
   template-url          -> the single-repo template clone URL
   defaults <key>        -> a value from the `defaults` mapping
@@ -154,6 +155,9 @@ def main(argv: list[str]) -> int:
         for s in _services(data):
             if target in _consumes(s):
                 print(s["name"])
+    elif cmd == "consumes":
+        for provider in _consumes(_find(data, args[0])):
+            print(provider)
     elif cmd == "graph":
         for s in _services(data):
             for provider in _consumes(s):
