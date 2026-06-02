@@ -19,3 +19,16 @@
   over a public connector (security). **Touches:** new repo; reuses `scripts/manifest.py`.
   **Effort:** ~an afternoon, smaller than brain-mcp (no vector DB / GPU). **Do when:** you
   actually feel the friction of pasting files into planning chats — not before (gold-plating).
+
+- [ ] **2026-06-02:** **Startup reconcile for the vault index.** After a cold start, notes
+  edited while brain-watcher was *down* are never re-indexed — it's a live-only watchdog
+  observer with no baseline catch-up (`brain-mcp/src/brain_mcp/watcher.py` `start()` does no
+  scan; `PollingObserver` snapshots at start and only emits later events). A reconcile pass on
+  startup should diff the vault against titan's index and re-ingest **only the delta**.
+  **Touches (cross-repo):** brain-mcp (the reconcile loop in brain-watcher — the main work)
+  **and** titan (enabling piece: expose a per-note content hash or mtime in `GET /notes` so the
+  watcher detects drift cheaply without re-reading every file). **Why:** edits made while the
+  stack is down silently stay stale in the index — hit this today (the new vault notes won't
+  auto-index on restart; they need a manual `touch`/`ingest_note`). **Landing order:** titan
+  first (additive hash in `/notes` = contract change), then brain-mcp consumes it.
+  **Effort:** small–medium.
