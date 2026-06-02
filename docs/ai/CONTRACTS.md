@@ -62,3 +62,20 @@ A Markdown note with YAML frontmatter containing a `domain:` field (`lernen` / `
 ### Invariants & gotchas
 - **No `domain:` → not indexed.** This is the single most important shared invariant.
 - Changing the allowed domain values touches all three repos → a workspace-level change.
+
+---
+
+## Contract: workspace-mcp MCP tools
+
+- **Provider:** repos/workspace-mcp
+- **Consumers:** a planning chat via the custom connector
+- **Machine-readable:** `contracts/workspace-mcp.tools.json`
+- **Transport:** MCP over HTTP, `:9300`, GitHub-OAuth gated (allowlist `charlieLucke`)
+
+### Surface
+Eight tools: `list_repos`, `get_system_map`, `get_routing`, `get_contracts_overview`, `list_contracts`, `get_contract`, `dependency_graph`, and `read_repo_file`.
+
+### Invariants & gotchas
+- **Hard Read-Only Rule:** Under no circumstances should any write, command execution, or mutating tools be added.
+- **Path Sandboxing:** `read_repo_file` and `get_contract` must enforce strict path checks to prevent directory traversal (`..` escapes).
+

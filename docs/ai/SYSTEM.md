@@ -18,6 +18,7 @@ obsidian-inbox-watcher feeds raw documents in. Everything runs locally — no cl
 | **brain-mcp** | MCP server + vault watcher; makes notes searchable for Claude | titan | MCP tools (`contracts/brain-mcp.tools.json`) | 9100 (0.0.0.0) |
 | **brain-dashboard** | Web control panel: status, logs, start/stop | titan (`/health`) | web UI (not a contract) | 9200 |
 | **obsidian-inbox-watcher** | Raw docs → Gemini → vault note | — | vault note format | — (worker) |
+| **workspace-mcp** | Read-only MCP server exposing the workspace map, routing, contracts, graph to planning chats | — | MCP tools (`contracts/workspace-mcp.tools.json`) | 9300 (0.0.0.0) |
 
 ## Dependency graph
 
@@ -26,6 +27,8 @@ brain-dashboard ──▶ titan ◀── brain-mcp
                                   ▲
                                   │ (watches vault notes/inbox/)
                     obsidian-inbox-watcher
+
+workspace-mcp (sits beside runtime graph as a planning-time introspection tool)
 ```
 
 - `brain-mcp` and `brain-dashboard` call **titan over HTTP**. titan depends on no repo —
@@ -33,6 +36,7 @@ brain-dashboard ──▶ titan ◀── brain-mcp
 - `obsidian-inbox-watcher` doesn't call anyone; it **writes Markdown notes** into the vault
   inbox. brain-mcp's *watcher* component then ingests them into titan. The coupling is the
   **vault note format** (a `domain:` frontmatter field), not an API call.
+- `workspace-mcp` is a **design-time introspection server** that exposes the workspace meta-repo to a planning chat. It is not part of the RAG runtime path and does not depend on any running services.
 
 ## End-to-end data flow
 

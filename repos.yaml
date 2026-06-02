@@ -40,3 +40,10 @@ services:
     consumes: []                       # produces vault notes; brain-mcp's watcher picks them up
     exposes: null                      # contract is the vault note format (domain frontmatter)
     port: null                         # systemd worker, no HTTP port
+
+  - name: workspace-mcp
+    role: Read-only MCP server exposing the workspace (map, routing, contracts, graph) to planning chats
+    consumes: []                       # reads workspace files; no runtime dependency on other services
+    exposes: contracts/workspace-mcp.tools.json
+    port: 9300
+

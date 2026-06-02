@@ -1,0 +1,57 @@
+{
+  "$comment": "MCP tool contract for workspace-mcp, exposing read-only workspace introspection. The consumer is a planning chat. Every tool is a pure read.",
+  "server": "workspace-mcp",
+  "transport": "mcp/http",
+  "endpoint": "https://charliespc.taild04050.ts.net/workspace-mcp",
+  "auth": "github-oauth (allowlist: charlieLucke)",
+  "tools": [
+    {
+      "name": "list_repos",
+      "description": "List all service repositories in the workspace with their roles.",
+      "args": {},
+      "calls": []
+    },
+    {
+      "name": "get_system_map",
+      "description": "Get the contents of the system architecture map (docs/ai/SYSTEM.md).",
+      "args": {},
+      "calls": []
+    },
+    {
+      "name": "get_routing",
+      "description": "Get the behavior routing guidelines (docs/ai/ROUTING.md).",
+      "args": {},
+      "calls": []
+    },
+    {
+      "name": "get_contracts_overview",
+      "description": "Get the contract registry overview (docs/ai/CONTRACTS.md).",
+      "args": {},
+      "calls": []
+    },
+    {
+      "name": "list_contracts",
+      "description": "List all machine-readable contract filenames in the contracts/ directory.",
+      "args": {},
+      "calls": []
+    },
+    {
+      "name": "get_contract",
+      "description": "Get the contents of a specific contract file from the contracts/ directory.",
+      "args": { "name": "string" },
+      "calls": []
+    },
+    {
+      "name": "dependency_graph",
+      "description": "Get the dependency graph output (consumer -> provider edges).",
+      "args": {},
+      "calls": []
+    },
+    {
+      "name": "read_repo_file",
+      "description": "Read the contents of a specific file inside a repository, sandboxed to that repo.",
+      "args": { "repo": "string", "relpath": "string" },
+      "calls": []
+    }
+  ]
+}

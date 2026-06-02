@@ -16,6 +16,7 @@
 | Dashboard UI, status polling, log streaming, start/stop | **brain-dashboard** | reads titan `/health` only |
 | Inbox extraction, Gemini prompt, note-writing | **obsidian-inbox-watcher** | output must keep `domain:` frontmatter |
 | The vault note format / `domain:` field semantics | **system** | shared by inbox-watcher + brain-mcp + titan → workspace decision |
+| Planning-time introspection / exposing the workspace to a planning chat | **workspace-mcp** | design-time tool — local decision |
 
 ## Cross-repo changes (real examples)
 
