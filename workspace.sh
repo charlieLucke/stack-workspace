@@ -90,7 +90,7 @@ cmd_new() {  ## Scaffold a new service from the template and register it: new <n
   if [ -f shared/child-SYSTEM_LINK.md ]; then
     sed "s/<name>/$name/g" shared/child-SYSTEM_LINK.md > "$path/docs/ai/SYSTEM_LINK.md"
   fi
-  ( cd "$path" && git init -q && git add -A && git commit -qm "chore: scaffold $name from template" )
+  ( cd "$path" && git init -q -b main && git add -A && git commit -qm "chore: scaffold $name from template" )
   ok "created repos/$name"
   printf '%s\n' "Next: add it to repos.yaml under services: (name/role/consumes/exposes/port), then ./workspace.sh check"
 }
