@@ -21,6 +21,7 @@
 - `GET /domains/{domain}/notes` — notes for a single domain; same fields as `/notes` (incl. `content_hash`); unknown domain → 200 with empty list.
 - `POST /find_related` — semantically related documents.
 - `DELETE /chunks` — remove a file's chunks.
+- `GET /stats` — runtime metrics: uptime, total chunks, domain count, cache hit rate, search-latency p50/p95/max, cache entry count, last-ingest age. In-memory counters, reset on restart; answers even when degraded.
 
 ### Invariants & gotchas
 - titan binds **127.0.0.1 only** — single-user, no auth/TLS at this layer by design.

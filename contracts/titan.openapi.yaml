@@ -136,3 +136,34 @@ paths:
       summary: Remove a file's chunks
       responses:
         "200": { description: Deletion summary }
+  /stats:
+    get:
+      summary: Runtime metrics (uptime, counts, cache, search latency)
+      description: >
+        In-memory counters reset on restart. Answers even in the degraded state
+        (no 503 guard); nullable fields are null when unavailable.
+      responses:
+        "200":
+          description: Service runtime metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uptime_seconds: { type: integer }
+                  collection_name: { type: string }
+                  total_chunks: { type: integer }
+                  domain_count: { type: integer }
+                  searches_total: { type: integer }
+                  cache_hits: { type: integer }
+                  cache_hit_rate: { type: number }
+                  search_latency:
+                    type: object
+                    properties:
+                      count: { type: integer }
+                      p50_ms: { type: integer, nullable: true }
+                      p95_ms: { type: integer, nullable: true }
+                      max_ms: { type: integer, nullable: true }
+                  cache_enabled: { type: boolean }
+                  cache_entries: { type: integer, nullable: true }
+                  last_ingest_age_seconds: { type: integer, nullable: true }
