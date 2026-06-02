@@ -101,13 +101,31 @@ paths:
                         source_path: { type: string }
                         domain: { type: string }
                         chunk_count: { type: integer }
+                        content_hash: { type: string, nullable: true }
                   total: { type: integer }
         "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /notes:
     get:
       summary: Indexed notes grouped by file
       responses:
-        "200": { description: Notes with domain + chunk count }
+        "200":
+          description: Notes with domain, chunk count, and content hash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        source_path: { type: string }
+                        domain: { type: string }
+                        chunk_count: { type: integer }
+                        content_hash: { type: string, nullable: true }
+                  total: { type: integer }
+        "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /find_related:
     post:
       summary: Semantically related documents

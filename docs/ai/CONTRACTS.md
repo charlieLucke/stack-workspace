@@ -17,8 +17,8 @@
 - `POST /search` — hybrid search `{query, domain?, top_k}` → ranked chunks.
 - `POST /ingest/file` — (re)index one file.
 - `GET /domains` — domains with chunk counts.
-- `GET /notes` — indexed notes grouped by file.
-- `GET /domains/{domain}/notes` — notes for a single domain; unknown domain → 200 with empty list.
+- `GET /notes` — indexed notes grouped by file; each entry includes `source_path`, `domain`, `chunk_count`, and `content_hash` (sha256 of the note's raw bytes; `null` for legacy/PDF chunks ingested before this field was introduced).
+- `GET /domains/{domain}/notes` — notes for a single domain; same fields as `/notes` (incl. `content_hash`); unknown domain → 200 with empty list.
 - `POST /find_related` — semantically related documents.
 - `DELETE /chunks` — remove a file's chunks.
 
