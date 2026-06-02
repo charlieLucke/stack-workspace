@@ -2,7 +2,7 @@
   "$comment": "MCP tool contract for workspace-mcp, exposing read-only workspace introspection. The consumer is a planning chat. Every tool is a pure read.",
   "server": "workspace-mcp",
   "transport": "mcp/http",
-  "endpoint": "https://charliespc.taild04050.ts.net:8443/mcp",
+  "endpoint": "https://charliespc.taild04050.ts.net/ws/mcp",
   "auth": "github-oauth (allowlist: charlieLucke)",
   "tools": [
     {
