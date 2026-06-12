@@ -235,7 +235,7 @@ P0 komplett umgesetzt: mypy strict grün, 17 Unit- + 24 Integrationstests grün
 /search 95 ms). Nebenbei: implizite `packaging`-Dependency deklariert,
 `types-pyyaml` als dev-Dependency ergänzt. Änderungen sind noch nicht committet.
 | P1.1 | ✅ 2026-06-12 — titan.config (pydantic-settings) + titan.infra (Factory-Dedup); Test-Fixture patcht jetzt alle Alias-Stellen (schloss latente Lücke: Suche lief je nach Importreihenfolge gegen die echte Collection) | titan | M |
-| P1.2 | QdrantRepository + Chunk-Dataclass (Factory-Dedup bereits in P1.1 erledigt) | titan | L |
+| P1.2 | ✅ 2026-06-12 — titan/models.Chunk (Dataclass statt dict[str,Any] durch die Pipeline; make_point validiert Embeddings) + titan/service/repository.QdrantRepository (Routes nur noch HTTP/Locking/Mapping; /notes-Aggregation dedupliziert) | titan | L |
 | P1.3 | ✅ 2026-06-12 — @_titan_errors-Decorator; `force` hat jetzt echte Bedeutung (Content-Hash-Skip in titan, IDEAS-Eintrag 2026-06-06 umgesetzt). Bonus-Fix: tenacity-Retry hatte keinen retry=-Filter und hat auch 4xx retried | brain-mcp | S |
 | P1.4 | inbox-watcher modularisieren, Extractor-Registry | inbox-watcher | M |
 | P1.5 | ✅ 2026-06-12 — Frontmatter via yaml.safe_dump, Gemini-Antwort als Pydantic-Modell (GeminiNote), Test mit feindseligem Titel | inbox-watcher | S |
@@ -245,12 +245,14 @@ P0 komplett umgesetzt: mypy strict grün, 17 Unit- + 24 Integrationstests grün
 | P2.2 | ✅ 2026-06-12 — section_full_text + tote _compute_section_hash entfernt. (colbert→numpy verworfen: PointStruct ist Pydantic, akzeptiert kein ndarray) | titan | S |
 | P2.3 | ✅ 2026-06-12 — täglicher cache_cleanup-Task im Lifespan (läuft auch einmal beim Start) | titan | S |
 | P2.4 | /notes via Facet oder Registry (erst bei Wachstum) | titan | M |
-| P3.1 | Pure-Function-Tests Pipeline-Kern | titan | M |
+| P3.1 | ✅ 2026-06-12 — tests/titan/test_chunking.py: chunk_markdown (Header/Overlap-Invarianten), _group_into_windows (Fake-Tokenizer), rrf_fusion, decompose_query-Parsing | titan | M |
 | P3.2 | hypothesis für _split_text | titan | S |
 | P3.3 | Request-ID-Korrelation (bei Bedarf) | titan/brain-mcp | M |
 
-**Offen sind damit nur noch die zwei großen Struktur-Refactorings (P1.2, P1.4)
-und die P3-Testtiefe** — alle als eigene fokussierte Session empfohlen.
+**Offen sind damit nur noch:** P1.4 (inbox-watcher modularisieren — Achtung,
+Tests patchen `watcher.process_file`/`_generate_note_json`/`load_api_key` auf
+dem main-Modul, Patch-Targets wandern beim Split mit), P2.4 (/notes-Facet,
+erst bei Vault-Wachstum) und P3.2/P3.3 (hypothesis, Request-IDs — bei Bedarf).
 Zusätzlich umgesetzt (nicht im Original-Plan): Content-Hash-Skip in titan
 (`skipped_reason: "unchanged"`, `force=true` umgeht ihn).
 
