@@ -234,20 +234,25 @@ P0 komplett umgesetzt: mypy strict grün, 17 Unit- + 24 Integrationstests grün
 (echtes Qdrant + GPU), Service neu gestartet und live verifiziert (/health ok,
 /search 95 ms). Nebenbei: implizite `packaging`-Dependency deklariert,
 `types-pyyaml` als dev-Dependency ergänzt. Änderungen sind noch nicht committet.
-| P1.1 | pydantic-settings für titan, Config-Dedup | titan | M |
-| P1.2 | QdrantRepository + Chunk-Dataclass + Factory-Dedup | titan | L |
-| P1.3 | Error-Decorator brain-mcp; `force` entfernen | brain-mcp | S |
+| P1.1 | ✅ 2026-06-12 — titan.config (pydantic-settings) + titan.infra (Factory-Dedup); Test-Fixture patcht jetzt alle Alias-Stellen (schloss latente Lücke: Suche lief je nach Importreihenfolge gegen die echte Collection) | titan | M |
+| P1.2 | QdrantRepository + Chunk-Dataclass (Factory-Dedup bereits in P1.1 erledigt) | titan | L |
+| P1.3 | ✅ 2026-06-12 — @_titan_errors-Decorator; `force` hat jetzt echte Bedeutung (Content-Hash-Skip in titan, IDEAS-Eintrag 2026-06-06 umgesetzt). Bonus-Fix: tenacity-Retry hatte keinen retry=-Filter und hat auch 4xx retried | brain-mcp | S |
 | P1.4 | inbox-watcher modularisieren, Extractor-Registry | inbox-watcher | M |
-| P1.5 | Frontmatter via yaml.safe_dump + Pydantic-Validierung | inbox-watcher | S |
-| P1.6 | Dashboard-Auth (Token/Tailscale-Bind) | brain-dashboard | S |
-| P1.7 | Watcher: 5xx/429 requeuen | brain-mcp | S |
-| P2.1 | Sub-Query-Batch-Embedding | titan | S |
-| P2.2 | section_full_text raus; colbert als numpy | titan | S |
-| P2.3 | Cache-Cleanup als periodischer Task | titan | S |
+| P1.5 | ✅ 2026-06-12 — Frontmatter via yaml.safe_dump, Gemini-Antwort als Pydantic-Modell (GeminiNote), Test mit feindseligem Titel | inbox-watcher | S |
+| P1.6 | ✅ 2026-06-12 — optionales BRAIN_DASH_AUTH_TOKEN (ASGI-Middleware, Cookie-Login via /?token=…, Bearer für API; leer = No-op). Aktivierung: Token in .env setzen + Restart | brain-dashboard | S |
+| P1.7 | ✅ 2026-06-12 — Watcher requeued Timeout/5xx/429 (max. 5 Versuche/Pfad, Reset bei Erfolg); 4xx bleibt permanent | brain-mcp | S |
+| P2.1 | ✅ 2026-06-12 — embed_queries(): ein encode()-Batch für alle Sub-Queries; CLI-main() dedupliziert (delegiert an search()) | titan | S |
+| P2.2 | ✅ 2026-06-12 — section_full_text + tote _compute_section_hash entfernt. (colbert→numpy verworfen: PointStruct ist Pydantic, akzeptiert kein ndarray) | titan | S |
+| P2.3 | ✅ 2026-06-12 — täglicher cache_cleanup-Task im Lifespan (läuft auch einmal beim Start) | titan | S |
 | P2.4 | /notes via Facet oder Registry (erst bei Wachstum) | titan | M |
 | P3.1 | Pure-Function-Tests Pipeline-Kern | titan | M |
 | P3.2 | hypothesis für _split_text | titan | S |
 | P3.3 | Request-ID-Korrelation (bei Bedarf) | titan/brain-mcp | M |
+
+**Offen sind damit nur noch die zwei großen Struktur-Refactorings (P1.2, P1.4)
+und die P3-Testtiefe** — alle als eigene fokussierte Session empfohlen.
+Zusätzlich umgesetzt (nicht im Original-Plan): Content-Hash-Skip in titan
+(`skipped_reason: "unchanged"`, `force=true` umgeht ihn).
 
 Empfohlene Reihenfolge: P0 als ein fokussierter Sprint (alles titan, zusammen testbar),
 dann P1.1+P1.2 als ein Refactoring (Settings und Repository bedingen sich), Rest nach
