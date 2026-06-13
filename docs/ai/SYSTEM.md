@@ -68,10 +68,10 @@ via SSE, and starts/stops the stack — it observes and controls, it is not in t
 ## Deployment topology
 
 - All services run in **WSL2 (Ubuntu)** as systemd user services on the workstation
-  `charliespc`. Qdrant runs in **Docker Desktop on Windows** (`qdrant_workstation`, ports
+  `<workstation>`. Qdrant runs in **Docker Desktop on Windows** (`qdrant_workstation`, ports
   6333/6334).
 - titan binds `127.0.0.1:8765` (local only, by design). brain-mcp binds `0.0.0.0:9100` and
-  is exposed publicly via **Tailscale Funnel** (`charliespc.taild04050.ts.net`), gated by
+  is exposed publicly via **Tailscale Funnel** (`<your-tailnet-host>.ts.net`), gated by
   GitHub-OAuth allowlist — the only service reachable from outside.
 - External dependencies (not repos): Qdrant, the BGE-M3 model (GPU), the Gemini API
   (inbox-watcher only), Tailscale.
