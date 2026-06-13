@@ -2,7 +2,7 @@
   "$comment": "Illustrative MCP tool contract for brain-mcp, reconstructed from the project notes. The consumer is Claude (custom connector). Renaming a tool or changing its args is a contract change.",
   "server": "brain-mcp",
   "transport": "mcp/http",
-  "endpoint": "https://charliespc.taild04050.ts.net/mcp",
+  "endpoint": "https://<your-tailnet-host>.ts.net/mcp",
   "auth": "github-oauth (allowlist: charlieLucke)",
   "tools": [
     {
