@@ -60,4 +60,4 @@ das System-Quality-Gate. Child-Repos behalten ihre eigene `CLAUDE.md` für lokal
 
 ## Lizenz
 
-Noch offen (TBD)
+MIT — siehe [LICENSE](LICENSE).
