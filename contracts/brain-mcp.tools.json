@@ -75,6 +75,61 @@
       "calls": [
         "titan DELETE /chunks"
       ]
+    },
+    {
+      "name": "write_note",
+      "description": "Create a NEW note. Enforces frontmatter, checks the domain against the closed list, marks quelle=agent-entwurf and clears geprueft, commits.",
+      "args": {
+        "file_path": "string",
+        "domain": "string",
+        "content": "string"
+      },
+      "calls": [
+        "filesystem (vault)",
+        "git",
+        "titan POST /ingest/file"
+      ]
+    },
+    {
+      "name": "edit_note",
+      "description": "Replace an exact passage in an existing note. Requires the content_hash seen when reading (stale check) and a unique old_text.",
+      "args": {
+        "file_path": "string",
+        "old_text": "string",
+        "new_text": "string",
+        "content_hash": "string"
+      },
+      "calls": [
+        "filesystem (vault)",
+        "git",
+        "titan POST /ingest/file"
+      ]
+    },
+    {
+      "name": "append_section",
+      "description": "Append a section to an existing note. No hash needed - appending cannot collide with an edit elsewhere.",
+      "args": {
+        "file_path": "string",
+        "section": "string"
+      },
+      "calls": [
+        "filesystem (vault)",
+        "git",
+        "titan POST /ingest/file"
+      ]
+    },
+    {
+      "name": "mark_verified",
+      "description": "Record that a note's claims were checked today. The counterpart to the writing tools, which clear geprueft. Refuses quelle=agent-entwurf.",
+      "args": {
+        "file_path": "string",
+        "quelle": "string?"
+      },
+      "calls": [
+        "filesystem (vault)",
+        "git",
+        "titan POST /ingest/file"
+      ]
     }
   ]
 }
