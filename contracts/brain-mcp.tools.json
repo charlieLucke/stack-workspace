@@ -8,38 +8,73 @@
     {
       "name": "query_knowledge",
       "description": "Hybrid search over the indexed vault; maps to titan POST /search.",
-      "args": { "query": "string", "domain": "string?", "top_k": "integer?" },
-      "calls": ["titan POST /search"]
+      "args": {
+        "query": "string",
+        "domain": "string?",
+        "top_k": "integer?"
+      },
+      "calls": [
+        "titan POST /search"
+      ]
     },
     {
       "name": "ingest_note",
       "description": "Index or re-index a single note; maps to titan POST /ingest/file.",
-      "args": { "path": "string", "domain": "string?" },
-      "calls": ["titan POST /ingest/file"]
+      "args": {
+        "path": "string",
+        "domain": "string?"
+      },
+      "calls": [
+        "titan POST /ingest/file"
+      ]
     },
     {
       "name": "list_domains",
       "description": "List domains with chunk counts; maps to titan GET /domains.",
       "args": {},
-      "calls": ["titan GET /domains"]
+      "calls": [
+        "titan GET /domains"
+      ]
     },
     {
       "name": "find_related",
       "description": "Find notes semantically related to a query/note; maps to titan POST /find_related.",
-      "args": { "query": "string", "top_k": "integer?" },
-      "calls": ["titan POST /find_related"]
+      "args": {
+        "query": "string",
+        "top_k": "integer?"
+      },
+      "calls": [
+        "titan POST /find_related"
+      ]
     },
     {
       "name": "list_notes",
       "description": "List indexed notes grouped by file; maps to titan GET /notes.",
       "args": {},
-      "calls": ["titan GET /notes"]
+      "calls": [
+        "titan GET /notes"
+      ]
+    },
+    {
+      "name": "list_stale",
+      "description": "List notes whose claims may no longer be true, worst first: agent drafts that were never reviewed, notes with no 'geprueft' date at all, then notes checked longer ago than the threshold. Reads the curation fields titan exposes on GET /notes.",
+      "args": {
+        "older_than_days": "integer?",
+        "domain": "string?"
+      },
+      "calls": [
+        "titan GET /notes"
+      ]
     },
     {
       "name": "delete_note",
       "description": "Remove a note's chunks from the index; maps to titan DELETE /chunks.",
-      "args": { "path": "string" },
-      "calls": ["titan DELETE /chunks"]
+      "args": {
+        "path": "string"
+      },
+      "calls": [
+        "titan DELETE /chunks"
+      ]
     }
   ]
 }

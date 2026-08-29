@@ -102,6 +102,12 @@ paths:
                         domain: { type: string }
                         chunk_count: { type: integer }
                         content_hash: { type: string, nullable: true }
+                        # Kuratierungsfelder aus dem Frontmatter (additiv, 2026-08-29).
+                        # geprueft == null heisst "nie geprueft" - genau die Auskunft,
+                        # auf die list_stale in brain-mcp aufsetzt.
+                        updated: { type: string, nullable: true }
+                        geprueft: { type: string, nullable: true }
+                        quelle: { type: string, nullable: true }
                   total: { type: integer }
         "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /notes:
@@ -109,7 +115,7 @@ paths:
       summary: Indexed notes grouped by file
       responses:
         "200":
-          description: Notes with domain, chunk count, and content hash
+          description: Notes with domain, chunk count, content hash, and curation fields
           content:
             application/json:
               schema:
@@ -124,6 +130,12 @@ paths:
                         domain: { type: string }
                         chunk_count: { type: integer }
                         content_hash: { type: string, nullable: true }
+                        # Kuratierungsfelder aus dem Frontmatter (additiv, 2026-08-29).
+                        # geprueft == null heisst "nie geprueft" - genau die Auskunft,
+                        # auf die list_stale in brain-mcp aufsetzt.
+                        updated: { type: string, nullable: true }
+                        geprueft: { type: string, nullable: true }
+                        quelle: { type: string, nullable: true }
                   total: { type: integer }
         "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /find_related:
