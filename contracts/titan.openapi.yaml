@@ -108,6 +108,8 @@ paths:
                         updated: { type: string, nullable: true }
                         geprueft: { type: string, nullable: true }
                         quelle: { type: string, nullable: true }
+                        # Ausgehende Wikilinks der Note (additiv, 2026-08-29).
+                        links: { type: array, items: { type: string } }
                   total: { type: integer }
         "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /notes:
@@ -136,6 +138,8 @@ paths:
                         updated: { type: string, nullable: true }
                         geprueft: { type: string, nullable: true }
                         quelle: { type: string, nullable: true }
+                        # Ausgehende Wikilinks der Note (additiv, 2026-08-29).
+                        links: { type: array, items: { type: string } }
                   total: { type: integer }
         "503": { description: Service not ready (BGE-M3 or Qdrant unavailable) }
   /find_related:
