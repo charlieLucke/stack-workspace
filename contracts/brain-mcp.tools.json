@@ -77,6 +77,15 @@
       ]
     },
     {
+      "name": "vault_style",
+      "description": "The house form for notes in this vault. Call before writing or editing one. Returns the note-writing skill plus the hard rules from CLAUDE.md, both read from disk at call time. A session reached through the connector sees neither file on its own: skills do not travel over MCP, and CLAUDE.md is indexed:false.",
+      "args": {},
+      "calls": [
+        "reads <vault>/.claude/skills/vault-notiz/SKILL.md",
+        "reads <vault>/CLAUDE.md (section 'Harte Regeln')"
+      ]
+    },
+    {
       "name": "write_note",
       "description": "Create a NEW note. Enforces frontmatter, checks the domain against the closed list, marks quelle=agent-entwurf and clears geprueft, commits.",
       "args": {
