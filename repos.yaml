@@ -1,11 +1,15 @@
-# rag-system — repository manifest (FILLED EXAMPLE)
+# stack-workspace — repository manifest
 #
-# This is what repos.yaml looks like for a real system: charlie's local RAG stack,
-# four independent repos already living in ~/projects, joined only by HTTP + a shared
-# vault note format. Use it as a reference for filling in your own.
+# Renamed from rag-workspace on 2026-09-04, following Entscheidung 1 of the vault
+# plan `plan-zentrales-dashboard.md`. The old name described what happened to be in
+# here first; the workspace is a development coordination layer, not a deployment
+# unit, so there is no reason for locally-running and elsewhere-running services to
+# be kept apart in it.
 
-system: rag-system
-description: A local, single-workstation retrieval-augmented generation stack.
+system: stack-workspace
+description: >
+  The repos charlie operates: a local RAG stack, the tools around client work, and
+  the single control surface (homebase) that is growing to front all of them.
 
 template:
   url: https://github.com/charlieLucke/python-template.git
@@ -29,11 +33,19 @@ services:
     exposes: contracts/brain-mcp.tools.json
     port: 9100                         # MCP over HTTP, 0.0.0.0 (reached via Tailscale Funnel)
 
-  - name: brain-dashboard
-    role: Web control panel — service status, live logs, start/stop of the RAG stack
+  - name: homebase
+    role: >
+      The control surface. Today: status, live logs, start/stop of the RAG stack.
+      Growing per plan-zentrales-dashboard into the single UI over everything else
+      here, with modules switched on by configuration and deployed three times
+      (workstation, hub, minecraft host) because the modules need different
+      runtime rights.
     consumes: [titan]                  # reads titan GET /health; controls systemd + Qdrant
     exposes: null                      # exposes a human web UI, not consumed by other repos
     port: 9200
+    # Renamed from brain-dashboard on 2026-09-04 (Entscheidung 2). The Python package,
+    # the BRAIN_DASH_ env prefix and the unit name still say brain-dashboard; those
+    # belong to Phase 2, deliberately kept out of the Phase 0 import diff.
 
   - name: obsidian-inbox-watcher
     role: Document frontend — TXT/PDF/DOCX/URL → Gemini → Markdown note in the vault inbox
@@ -47,3 +59,23 @@ services:
     exposes: contracts/workspace-mcp.tools.json
     port: 9300
 
+  # --- Adopted 2026-09-04, Phase 1 of plan-zentrales-dashboard -------------------
+  # These two were always part of what charlie operates; they were outside the
+  # workspace only because the workspace was named after the RAG stack.
+
+  - name: meeting-tickets
+    role: Recorded client conversations → reviewed ticket drafts → cards on a Planka board
+    consumes: []                       # writes to Planka's HTTP API directly (external infra on the hub)
+    exposes: null                      # a CLI (`run`, `setup-project`), not a service
+    port: null
+
+  - name: planka-mcp
+    role: Gives Claude Code one Planka board — view released tickets, claim, work, return for review
+    consumes: []                       # reads/moves cards via Planka's HTTP API (external infra on the hub)
+    exposes: null                      # serves MCP tools, but no contract file has been extracted yet
+    port: 9101                         # behind the same caddy on 8088, served under /planka
+
+# NOT a service here, on purpose: smart-home-dashboard. Entscheidung 0 of the plan
+# gives it no repo of its own — its code was imported verbatim into homebase
+# (imported/smart-home-dashboard/) and becomes a module there in Phase 2. Adopting
+# it as a service would recreate exactly the second owner the plan set out to avoid.
