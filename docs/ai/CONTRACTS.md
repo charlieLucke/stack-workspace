@@ -78,4 +78,3 @@ Eight tools: `list_repos`, `get_system_map`, `get_routing`, `get_contracts_overv
 ### Invariants & gotchas
 - **Hard Read-Only Rule:** Under no circumstances should any write, command execution, or mutating tools be added.
 - **Path Sandboxing:** `read_repo_file` and `get_contract` must enforce strict path checks to prevent directory traversal (`..` escapes).
-

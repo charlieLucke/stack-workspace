@@ -52,7 +52,9 @@ def _load_live(source: str) -> dict[str, Any]:
         with urllib.request.urlopen(source, timeout=5) as resp:  # noqa: S310
             return json.loads(resp.read().decode("utf-8"))
     p = Path(source)
-    spec = _load_spec_text(p.read_text(encoding="utf-8"), p.suffix.lower() in (".yaml", ".yml"))
+    spec = _load_spec_text(
+        p.read_text(encoding="utf-8"), p.suffix.lower() in (".yaml", ".yml")
+    )
     if spec is None:
         raise RuntimeError("live source is YAML but PyYAML is unavailable")
     return spec
@@ -91,7 +93,9 @@ def main(argv: list[str]) -> int:
     added = sorted(live_ops - committed_ops)
 
     if not missing and not added:
-        print(f"  OK {contract_path.name}: {len(committed_ops)} operations match the live service")
+        print(
+            f"  OK {contract_path.name}: {len(committed_ops)} operations match the live service"
+        )
         return 0
 
     print(f"  DRIFT {contract_path.name}:")

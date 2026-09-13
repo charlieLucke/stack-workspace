@@ -50,4 +50,3 @@ the system layer on top instead of reinventing per-repo tooling.
 **Reasoning:** To allow planning agents (like Opus) to inspect the workspace structure, routing, contracts, and repository code without requiring manual copy-pasting. It runs only at design time, separate from the RAG runtime path, keeping the RAG services clean and decoupled.
 **Alternatives considered:** Putting the workspace tools into `brain-mcp` (rejected because `brain-mcp` handles runtime vault RAG and shouldn't contain workspace-level development/introspection capabilities; different lifecycle/deployment cadence).
 **Consequences:** A new service is registered in `repos.yaml` on port 9300. It must strictly enforce a read-only boundary to avoid remote code execution or unauthorized repository mutations.
-

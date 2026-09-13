@@ -1,0 +1,34 @@
+# Run on every commit. Install with: uv run pre-commit install
+# Update versions periodically with: uv run pre-commit autoupdate
+#
+# This repo coordinates the service repos rather than shipping a package, so the
+# gate here is lighter than theirs: hygiene, lint and format for the few scripts
+# under scripts/, and the secret scan — which matters most here, because this is
+# the repo that names every machine and every contract in one place.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: ["--maxkb=1000"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks

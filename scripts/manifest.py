@@ -46,7 +46,9 @@ def _scalar(value: str) -> Any:
 def _fallback_load(text: str) -> dict[str, Any]:
     """Parse the narrow repos.yaml subset without PyYAML."""
     root: dict[str, Any] = {}
-    cur_map: dict[str, Any] | None = None  # active top-level mapping (defaults/template)
+    cur_map: dict[str, Any] | None = (
+        None  # active top-level mapping (defaults/template)
+    )
     services: list[dict[str, Any]] = []
     cur_svc: dict[str, Any] | None = None
     in_services = False

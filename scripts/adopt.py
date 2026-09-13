@@ -17,12 +17,16 @@ from pathlib import Path
 
 import manifest  # sibling module in scripts/
 
-READ_LINE = "`docs/ai/SYSTEM_LINK.md` — if this repo is part of a larger system, read it first"
+READ_LINE = (
+    "`docs/ai/SYSTEM_LINK.md` — if this repo is part of a larger system, read it first"
+)
 START = "<!-- SHARED-AGENT-RULES:START"
 END = "<!-- SHARED-AGENT-RULES:END -->"
 
 
-def _fill_system_link(name: str, role: str, consumes: str, exposes: str, port: str) -> str:
+def _fill_system_link(
+    name: str, role: str, consumes: str, exposes: str, port: str
+) -> str:
     tmpl = Path("shared/child-SYSTEM_LINK.md").read_text(encoding="utf-8")
     repl = {
         "<name>": name,
