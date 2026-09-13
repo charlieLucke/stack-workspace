@@ -1,27 +1,27 @@
-# SYSTEM_LINK — this repo is part of a system
+# SYSTEM_LINK — dieses Repo ist Teil eines Systems
 
-> Dropped into each child repo as `docs/ai/SYSTEM_LINK.md` by `./workspace.sh new` and
-> kept in sync by `./workspace.sh sync-shared`. It tells an agent working *inside* this
-> repo that it belongs to a larger system, and where the system brain lives.
+> Wird von `./workspace.sh new` als `docs/ai/SYSTEM_LINK.md` in jedes Child-Repo abgelegt und
+> von `./workspace.sh sync-shared` synchron gehalten. Es teilt einem Agenten, der *innerhalb*
+> dieses Repos arbeitet, mit, dass es zu einem größeren System gehört und wo das System-Hirn liegt.
 
-## This repo
-- **Service name:** <name>
-- **Role:** <one-line responsibility>
-- **Consumes:** <other services this repo calls, by contract>
-- **Exposes:** <contract this repo publishes>
-- **Port (local):** <port or n/a>
+## Dieses Repo
+- **Service-Name:** <name>
+- **Rolle:** <Verantwortung in einer Zeile>
+- **Konsumiert:** <andere Services, die dieses Repo per Contract aufruft>
+- **Stellt bereit:** <Contract, den dieses Repo veröffentlicht>
+- **Port (lokal):** <Port oder —>
 
-## Where the system brain lives
-The coordinating workspace repo holds the cross-repo picture:
-- System map & dependency graph → workspace `docs/ai/SYSTEM.md`
-- Which repo owns what → workspace `docs/ai/ROUTING.md`
-- The contracts this repo must honor → workspace `docs/ai/CONTRACTS.md` + `contracts/`
-- Cross-repo decisions → workspace `docs/ai/DECISIONS.md`
+## Wo das System-Hirn liegt
+Das koordinierende Workspace-Repo hält das Repo-übergreifende Gesamtbild:
+- Systemkarte & Abhängigkeitsgraph → Workspace `docs/ai/SYSTEM.md`
+- Welches Repo was besitzt → Workspace `docs/ai/ROUTING.md`
+- Die Contracts, die dieses Repo einhalten muss → Workspace `docs/ai/CONTRACTS.md` + `contracts/`
+- Repo-übergreifende Entscheidungen → Workspace `docs/ai/DECISIONS.md`
 
-## Rules that override nothing, but add one thing
-Follow this repo's own `CLAUDE.md` for all local work. The one addition from being part of
-a system: **a change at this repo's boundary (its exposed contract) is a workspace-level
-decision** — stop and surface it rather than changing the interface here.
+## Regeln, die nichts überschreiben, aber eine Sache ergänzen
+Folge für alle lokale Arbeit der eigenen `CLAUDE.md` dieses Repos. Die einzige Ergänzung daraus,
+Teil eines Systems zu sein: **eine Änderung an der Grenze dieses Repos (seinem exponierten Contract)
+ist eine Entscheidung auf Workspace-Ebene** — anhalten und ansprechen, statt das Interface hier zu ändern.
 
 <!-- SHARED-AGENT-RULES:START (synced from workspace shared/agent-rules.md — do not edit here) -->
 <!-- SHARED-AGENT-RULES:END -->

@@ -1,23 +1,23 @@
-# Current Cross-Repo Task
+# Aktuelle Repo-übergreifende Aufgabe
 
-> Only for features that span more than one repo. Single-repo work is tracked in that
-> repo's own CURRENT_TASK.md. Keep this short.
+> Nur für Features, die mehr als ein Repo überspannen. Single-Repo-Arbeit wird in der
+> eigenen CURRENT_TASK.md des jeweiligen Repos getrackt. Kurz halten.
 
-## Goal
-Implement a one-shot startup reconcile pass in brain-watcher (brain-mcp) that diffs the vault against titan's index and re-ingests/deletes only the delta, using content_hash as the drift signal.
+## Ziel
+Einen einmaligen Startup-Reconcile-Pass in brain-watcher (brain-mcp) implementieren, der den Vault gegen titans Index diffed und nur das Delta neu-ingestet/löscht, wobei content_hash als Drift-Signal genutzt wird.
 
-## Workspace plan
+## Workspace-Plan
 [2026-06-02_vault-index-startup-reconcile.md](file:///home/charl/projects/rag-workspace/docs/ai/plans/2026-06-02_vault-index-startup-reconcile.md)
 
-## Per-repo sub-steps (in landing order: providers before consumers)
-- [x] repos/titan — `content_hash` payload key on ingest + expose on GET `/notes` and GET `/domains/{domain}/notes` (+ update contract)
-- [x] repos/brain-mcp — mirror `content_hash` in schema, implement `_reconcile()`, call at startup, and add tests
+## Per-Repo-Teilschritte (in Landing-Reihenfolge: Provider vor Konsumenten)
+- [x] repos/titan — `content_hash`-Payload-Key beim Ingest + auf GET `/notes` und GET `/domains/{domain}/notes` bereitstellen (+ Contract aktualisieren)
+- [x] repos/brain-mcp — `content_hash` im Schema spiegeln, `_reconcile()` implementieren, beim Start aufrufen und Tests ergänzen
 
-## Contract checklist
-- [x] contracts/ updated
-- [x] CONTRACTS.md updated
-- [x] all consumers updated
-- [x] `./workspace.sh contracts` green
+## Contract-Checkliste
+- [x] contracts/ aktualisiert
+- [x] CONTRACTS.md aktualisiert
+- [x] alle Konsumenten aktualisiert
+- [x] `./workspace.sh contracts` grün
 
-## Blockers
-None. Feature is fully landed, verified, committed, and `./workspace.sh check` is green.
+## Blocker
+Keine. Das Feature ist vollständig gelandet, verifiziert, committet, und `./workspace.sh check` ist grün.

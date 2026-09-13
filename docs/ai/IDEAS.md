@@ -1,34 +1,34 @@
-# System Ideas
+# System-Ideen
 
-> Out-of-scope, cross-repo ideas captured during work, to revisit later.
-> Single-repo ideas go in that repo's IDEAS.md. Nothing here is committed work.
+> Out-of-Scope-, Repo-übergreifende Ideen, die während der Arbeit festgehalten werden, um sie später wieder aufzugreifen.
+> Single-Repo-Ideen gehören in die IDEAS.md des jeweiligen Repos. Nichts hier ist verbindliche Arbeit.
 
 ## Format
-- [ ] **YYYY-MM-DD:** Idea description. Which repos it would touch. Why it matters. Rough effort.
+- [ ] **JJJJ-MM-TT:** Ideenbeschreibung. Welche Repos sie berühren würde. Warum sie wichtig ist. Grober Aufwand.
 
 ---
 
-## Pending
+## Ausstehend
 
-- [ ] **2026-06-02:** Read-only **workspace-introspection MCP server** (new repo
-  `workspace-mcp`). Exposes the system to a planning chat (Opus, via the existing
-  connector pattern): `get_system_map`, `get_routing`, `get_contract` / `list_contracts`,
-  `dependency_graph`, `read_repo_file` (scoped, read-only), `contract_drift`.
-  **Why:** closes the `PLANNING.md` gap where Opus in a plain chat can't read the repo
-  (today you paste files in by hand). **Scope:** read-only only — no scaffold/check/commit
-  over a public connector (security). **Touches:** new repo; reuses `scripts/manifest.py`.
-  **Effort:** ~an afternoon, smaller than brain-mcp (no vector DB / GPU). **Do when:** you
-  actually feel the friction of pasting files into planning chats — not before (gold-plating).
+- [ ] **2026-06-02:** Read-only **Workspace-Introspektions-MCP-Server** (neues Repo
+  `workspace-mcp`). Stellt das System einem Planungs-Chat bereit (Opus, über das bestehende
+  Connector-Pattern): `get_system_map`, `get_routing`, `get_contract` / `list_contracts`,
+  `dependency_graph`, `read_repo_file` (gescopt, read-only), `contract_drift`.
+  **Warum:** schließt die `PLANNING.md`-Lücke, wo Opus in einem reinen Chat das Repo nicht lesen kann
+  (heute fügt man Dateien von Hand ein). **Scope:** nur read-only — kein Scaffold/Check/Commit
+  über einen öffentlichen Connector (Security). **Berührt:** neues Repo; verwendet `scripts/manifest.py` wieder.
+  **Aufwand:** ~ein Nachmittag, kleiner als brain-mcp (keine Vektor-DB / GPU). **Tun, wenn:** du
+  die Reibung des Datei-Einfügens in Planungs-Chats tatsächlich spürst — nicht vorher (Gold-Plating).
 
-- [ ] **2026-06-02:** **Startup reconcile for the vault index.** After a cold start, notes
-  edited while brain-watcher was *down* are never re-indexed — it's a live-only watchdog
-  observer with no baseline catch-up (`brain-mcp/src/brain_mcp/watcher.py` `start()` does no
-  scan; `PollingObserver` snapshots at start and only emits later events). A reconcile pass on
-  startup should diff the vault against titan's index and re-ingest **only the delta**.
-  **Touches (cross-repo):** brain-mcp (the reconcile loop in brain-watcher — the main work)
-  **and** titan (enabling piece: expose a per-note content hash or mtime in `GET /notes` so the
-  watcher detects drift cheaply without re-reading every file). **Why:** edits made while the
-  stack is down silently stay stale in the index — hit this today (the new vault notes won't
-  auto-index on restart; they need a manual `touch`/`ingest_note`). **Landing order:** titan
-  first (additive hash in `/notes` = contract change), then brain-mcp consumes it.
-  **Effort:** small–medium.
+- [ ] **2026-06-02:** **Startup-Reconcile für den Vault-Index.** Nach einem Kaltstart werden Notizen,
+  die editiert wurden, während brain-watcher *unten* war, nie neu indexiert — es ist ein Live-only-watchdog-
+  Observer ohne Baseline-Catch-up (`brain-mcp/src/brain_mcp/watcher.py` `start()` macht keinen
+  Scan; `PollingObserver` snapshottet beim Start und emittiert nur spätere Events). Ein Reconcile-Pass beim
+  Start sollte den Vault gegen titans Index diffen und **nur das Delta** neu-ingesten.
+  **Berührt (repo-übergreifend):** brain-mcp (die Reconcile-Schleife in brain-watcher — die Hauptarbeit)
+  **und** titan (Enabling-Teil: einen Per-Notiz-Content-Hash oder mtime in `GET /notes` bereitstellen, sodass der
+  Watcher Drift günstig erkennt, ohne jede Datei neu zu lesen). **Warum:** Edits während der
+  Stack unten ist, bleiben still veraltet im Index — heute getroffen (die neuen Vault-Notizen indexieren sich beim Neustart nicht
+  automatisch; sie brauchen ein manuelles `touch`/`ingest_note`). **Landing-Reihenfolge:** titan
+  zuerst (additiver Hash in `/notes` = Contract-Änderung), dann konsumiert brain-mcp ihn.
+  **Aufwand:** klein–mittel.

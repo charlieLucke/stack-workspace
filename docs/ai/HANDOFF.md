@@ -1,27 +1,27 @@
-# System Handoff – 2026-06-02 20:20
-Model: Gemini 3.5 Flash
+# System-Übergabe – 2026-06-02 20:20
+Modell: Gemini 3.5 Flash
 
-## Feature in progress
-- Workspace plan: [2026-06-02_vault-index-startup-reconcile.md](file:///home/charl/projects/rag-workspace/docs/ai/plans/2026-06-02_vault-index-startup-reconcile.md) (Fully completed)
+## Feature in Arbeit
+- Workspace-Plan: [2026-06-02_vault-index-startup-reconcile.md](file:///home/charl/projects/rag-workspace/docs/ai/plans/2026-06-02_vault-index-startup-reconcile.md) (Vollständig abgeschlossen)
 
-## Repos touched (and the commit/branch each is on)
-- repos/titan @ `149a47c` — Stage 1: Added `content_hash` payload key on ingest and exposed it on notes GET routes.
-- repos/brain-mcp @ `20911cd` — Stage 2: Mirrored schema `content_hash`, implemented `_reconcile()`, added 5 reconcile tests, and updated tracking.
+## Berührte Repos (und der Commit/Branch, auf dem jedes ist)
+- repos/titan @ `149a47c` — Stage 1: `content_hash`-Payload-Key beim Ingest ergänzt und auf den Notes-GET-Routes bereitgestellt.
+- repos/brain-mcp @ `20911cd` — Stage 2: Schema-`content_hash` gespiegelt, `_reconcile()` implementiert, 5 Reconcile-Tests ergänzt und Tracking aktualisiert.
 
-## Landed so far (in dependency order)
-- Stage 1: titan `content_hash` implementation and contract updates.
-- Stage 2: brain-mcp consumer implementation, unit/integration testing, and docs.
+## Bisher gelandet (in Abhängigkeitsreihenfolge)
+- Stage 1: titan-`content_hash`-Implementierung und Contract-Updates.
+- Stage 2: brain-mcp-Konsumenten-Implementierung, Unit-/Integrationstests und Docs.
 
-## Next concrete step (which repo, which change)
-- None. Review by the user.
+## Nächster konkreter Schritt (welches Repo, welche Änderung)
+- Keiner. Review durch den Nutzer.
 
-## Contract status
-- [x] contracts/ updated
-- [x] all consumers updated
-- [x] `./workspace.sh contracts` green
+## Contract-Status
+- [x] contracts/ aktualisiert
+- [x] alle Konsumenten aktualisiert
+- [x] `./workspace.sh contracts` grün
 
-## Open questions / decisions needed (Opus)
-- None.
+## Offene Fragen / nötige Entscheidungen (Opus)
+- Keine.
 
-## Notes / gotchas discovered
-- Unit tests that run `VaultWatcher.start()` (which spawns the worker thread and triggers a startup reconcile) were failing because they write test files to disk before startup. These were resolved by adding a `skip_reconcile: bool = False` argument to `VaultWatcher.__init__` and setting it to `True` for standard watchdog debounce unit tests. Reconcile-specific tests call `watcher._reconcile()` directly.
+## Notizen / entdeckte Stolperfallen
+- Unit-Tests, die `VaultWatcher.start()` ausführen (was den Worker-Thread spawnt und einen Startup-Reconcile auslöst), schlugen fehl, weil sie vor dem Start Testdateien auf die Platte schreiben. Das wurde gelöst, indem ein `skip_reconcile: bool = False`-Argument zu `VaultWatcher.__init__` ergänzt und für Standard-watchdog-Debounce-Unit-Tests auf `True` gesetzt wurde. Reconcile-spezifische Tests rufen `watcher._reconcile()` direkt auf.

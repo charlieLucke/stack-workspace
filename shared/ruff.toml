@@ -1,4 +1,4 @@
-# Shared ruff config for every service in rag-system.
+# Shared ruff config for every service in stack-workspace.
 #
 # Child repos keep their own pyproject.toml [tool.ruff] (from the single-repo template);
 # this file is the canonical reference they must stay aligned with. If a repo needs to
@@ -20,10 +20,29 @@ select = [
     "N",   # pep8-naming
     "SIM", # flake8-simplify
     "RUF", # ruff-specific
+
+    # --- AI-code audit gate (added 2026-09-13) ------------------------------
+    # The four rules the "bad AI code" catalogue turns into findings: a broad
+    # catch that hides a failure, an assert standing in for validation, a
+    # request without a timeout, an f-string inside a log call, and an import
+    # buried in a function body. Allowed where justified — but then it carries
+    # a `noqa` that says why, instead of passing silently.
+    "BLE",     # blind `except Exception`
+    "S",       # flake8-bandit
+    "G",       # logging: no f-strings in log calls
+    "PLC0415", # import inside a function
 ]
 
 [lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]
+"tests/**/*.py" = [
+    "S101",    # assert is the point of a test
+    "S105",    # fake tokens in fixtures are not secrets
+    "S106",
+    "PLC0415", # a test may import inside the test that needs it
+    "S108",    # "/tmp/..." in a test is a path literal, not a temp file
+    "S104",    # a test may assert that "0.0.0.0" is accepted
+    "S107",    # a fake token as a fixture default is not a password
+]
 
 [format]
 quote-style = "double"

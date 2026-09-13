@@ -1,70 +1,71 @@
 # Routing — stack-workspace
 
-> Where a change belongs. Consult this before editing any repo.
+> Wohin eine Änderung gehört. Vor jeder Bearbeitung eines Repos hier nachsehen.
 >
-> The test this file has to pass, set by `plan-zentrales-dashboard`: **does it answer a
-> change question you would otherwise have had to guess at?** A row that only restates
-> a repo's name is not pulling its weight. The rows below were written against the
-> questions that were actually ambiguous at seven repos.
+> Die Prüffrage, die `plan-zentrales-dashboard` an diese Datei stellt: **beantwortet sie
+> eine Änderungsfrage, die man sonst hätte raten müssen?** Eine Zeile, die nur den Namen
+> eines Repos wiederholt, trägt nichts. Die Zeilen unten sind gegen die Fragen
+> geschrieben, die bei sieben Repos tatsächlich mehrdeutig waren.
 
-## Ownership by responsibility
+## Zuständigkeit nach Verantwortung
 
-| If the change is about… | Repo | Notes |
-|-------------------------|------|-------|
-| Chunking, embeddings, Late Chunking, BGE-M3 | **titan** | engine internals — local decision |
-| Hybrid search / RRF / ranking | **titan** | if the `/search` response shape changes → contract |
-| Qdrant collection / vectors / payload index | **titan** | only titan writes Qdrant |
-| titan's HTTP endpoints (any path/param/response) | **titan** | **contract change** → update `contracts/titan.openapi.yaml` + brain-mcp + homebase |
-| An MCP tool's name/args/result | **brain-mcp** | **contract change** → `contracts/brain-mcp.tools.json` (Claude is the consumer) |
-| Vault watcher / debounce / which files get ingested | **brain-mcp** | calls titan `/ingest/file` |
-| GitHub-OAuth allowlist, Funnel auth | **brain-mcp** | local to brain-mcp |
-| Dashboard UI, status polling, log streaming, start/stop | **homebase** | reads titan `/health` only |
-| Inbox extraction, Gemini prompt, note-writing | **obsidian-inbox-watcher** | output must keep `domain:` frontmatter |
-| The vault note format / `domain:` field semantics | **system** | shared by inbox-watcher + brain-mcp + titan → workspace decision |
-| Planning-time introspection / exposing the workspace to a planning chat | **workspace-mcp** | design-time tool — local decision |
-| Transcription, ticket extraction, the prompt that drafts a ticket | **meeting-tickets** | its output lands on the board, not in another repo |
-| Reading, claiming or moving a card | **planka-mcp** | the board is the interface; the two Planka repos never call each other |
-| Whether a ticket draft is *approved* | **the Planka board** | not a repo. A review UI in homebase would repeat the ADR violation of 2026-08-07 |
-| The Planka board's list/column structure | **system** | both Planka repos encode it → workspace decision, not one repo's call |
-| A caddy route or a new path under the one Funnel | **workspace-mcp** | the Caddyfile lives in `repos/workspace-mcp/deploy/`, even though it fronts three servers |
+| Wenn die Änderung … betrifft | Repo | Anmerkung |
+|------------------------------|------|-----------|
+| Chunking, Embeddings, Late Chunking, BGE-M3 | **titan** | Maschineninternes — lokale Entscheidung |
+| Hybride Suche / RRF / Ranking | **titan** | ändert sich die `/search`-Antwortform → Contract |
+| Qdrant-Collection / Vektoren / Payload-Index | **titan** | nur titan schreibt Qdrant |
+| titans HTTP-Endpunkte (Pfad/Parameter/Antwort) | **titan** | **Contract-Änderung** → `contracts/titan.openapi.yaml` + brain-mcp + homebase |
+| Name/Argumente/Ergebnis eines MCP-Werkzeugs | **brain-mcp** | **Contract-Änderung** → `contracts/brain-mcp.tools.json` (Claude ist der Konsument) |
+| Vault-Watcher / Entprellung / welche Dateien indiziert werden | **brain-mcp** | ruft titan `/ingest/file` |
+| GitHub-OAuth-Allowlist, Funnel-Auth | **brain-mcp** | lokal zu brain-mcp |
+| Dashboard-UI, Status-Polling, Log-Streaming, Start/Stopp | **homebase** | liest nur titan `/health` |
+| Inbox-Extraktion, Gemini-Prompt, Notiz-Schreiben | **obsidian-inbox-watcher** | die Ausgabe muss das `domain:`-Frontmatter behalten |
+| Das Vault-Notizformat / die Bedeutung von `domain:` | **System** | geteilt von Inbox-Watcher + brain-mcp + titan → Workspace-Entscheidung |
+| Introspektion zur Planungszeit / den Workspace einem Chat öffnen | **workspace-mcp** | Entwurfszeit-Werkzeug — lokale Entscheidung |
+| Transkription, Ticket-Extraktion, den Prompt, der ein Ticket entwirft | **meeting-tickets** | die Ausgabe landet auf dem Board, nicht in einem anderen Repo |
+| Eine Karte lesen, beanspruchen oder verschieben | **planka-mcp** | das Board ist die Schnittstelle; die beiden Planka-Repos rufen einander nie |
+| Ob ein Ticket-Entwurf *abgenommen* ist | **das Planka-Board** | kein Repo. Eine Review-UI in homebase wäre die ADR-Verletzung vom 07.08.2026 |
+| Die Listen-/Spaltenstruktur des Boards | **System** | beide Planka-Repos kodieren sie → Workspace-Entscheidung, nicht die eines Repos |
+| Eine caddy-Route oder ein neuer Pfad unter dem einen Funnel | **workspace-mcp** | der Caddyfile liegt in `repos/workspace-mcp/deploy/`, obwohl er drei Server bedient |
 
-## The rows that only exist since 2026-09-04
+## Die Zeilen, die es erst seit dem 04.09.2026 gibt
 
-`plan-zentrales-dashboard` imported three foreign codebases into homebase. Until Phase 2
-turns them into modules they sit untouched under `imported/`, and that creates
-boundaries that did not exist before:
+`plan-zentrales-dashboard` hat drei fremde Codebasen nach homebase importiert. Bis
+Phase 2 sie zu Modulen macht, liegen sie unangetastet unter `imported/` — und das zieht
+Grenzen, die es vorher nicht gab:
 
-| If the change is about… | Where | Notes |
-|-------------------------|-------|-------|
-| Anything under `homebase/imported/` | **nowhere yet** | it is imported *verbatim* and must stay byte-identical until Phase 2. ruff is excluded from it on purpose. Fixing a bug there before Phase 2 means the import is no longer what it claims to be |
-| The wake-on-LAN **button** | **homebase** | "everything in one place" is about operating it |
-| The wake-on-LAN **sender** | **the hub**, not this repo | a VPS cannot broadcast into the home LAN, and the thing that wakes the workstation must never depend on the workstation |
-| Cold start / full shutdown of the stack | **stays a `.bat` script** | homebase runs *inside* WSL: it cannot start Docker Desktop, and `wsl --shutdown` would kill its own caller |
-| Reachability lamps, status views from the scripts | **homebase** | the checking-and-reporting half is exactly what a web UI does well — Phase 5 |
-| An interactive SSH session (`Mini-PC`, `coolify-prod`) | **stays a `.bat` script** | rebuilding it in the browser means running a web terminal, which is an attack surface out of all proportion to a shortcut |
-| Which machine a homebase module is deployed to | **system** | forced by runtime rights, not preference → workspace decision. See SYSTEM.md, "Deployment topology" |
-| Any real tailnet host, address or login name | **the vault, never a repo** | repos carry placeholders only. The vault is private; a repo is only private today |
+| Wenn die Änderung … betrifft | Wohin | Anmerkung |
+|------------------------------|-------|-----------|
+| Irgendetwas unter `homebase/imported/` | **noch nirgends** | es ist *unverändert* importiert und muss bis Phase 2 byte-identisch bleiben. ruff ist dort bewusst ausgeschlossen. Wer vor Phase 2 einen Fehler darin behebt, macht den Import zu etwas anderem, als er behauptet |
+| Den Wake-on-LAN-**Knopf** | **homebase** | „alles an einem Ort" gilt für die Bedienung |
+| Den Wake-on-LAN-**Sender** | **den Hub**, nicht dieses Repo | ein VPS kann nicht ins Heimnetz broadcasten, und was die Workstation weckt, darf nie von ihr abhängen |
+| Kaltstart / vollständiges Herunterfahren des Stacks | **bleibt `.bat`-Skript** | homebase läuft *innerhalb* von WSL: es kann Docker Desktop nicht starten, und `wsl --shutdown` brächte den eigenen Aufrufer um |
+| Erreichbarkeitsampeln, Statusansichten aus den Skripten | **homebase** | die prüfende und meldende Hälfte ist genau das, was eine Weboberfläche gut kann — Phase 5 |
+| Eine interaktive SSH-Sitzung (`Mini-PC`, `coolify-prod`) | **bleibt `.bat`-Skript** | das im Browser nachzubauen heißt, ein Web-Terminal zu betreiben — eine Angriffsfläche ohne Verhältnis zu einer Verknüpfung |
+| Auf welcher Maschine ein homebase-Modul läuft | **System** | von Laufzeitrechten erzwungen, nicht von Vorliebe → Workspace-Entscheidung. Siehe SYSTEM.md, „Deployment-Topologie" |
+| Einen echten Tailnet-Host, eine Adresse oder einen Loginnamen | **den Vault, nie ein Repo** | Repos tragen nur Platzhalter. Der Vault ist privat; ein Repo ist es nur heute |
 
-## Cross-repo changes (real examples)
+## Repo-übergreifende Änderungen (echte Beispiele)
 
-- **"Add a new field to titan's `/search` response"** → contract change. Update
-  `contracts/titan.openapi.yaml`, then brain-mcp (the consumer) in the same feature.
-  homebase is unaffected (it only uses `/health`).
-- **"Change the `domain:` frontmatter rules"** → touches inbox-watcher (writer),
-  brain-mcp (watcher/reader) and titan (filter/cache). Workspace plan + decision.
-- **"Rename an MCP tool"** → brain-mcp contract; the consumer is Claude itself, so
-  update `contracts/brain-mcp.tools.json` and the tool descriptions.
-- **"Add a column to the Planka board"** → both meeting-tickets (writes cards into it)
-  and planka-mcp (reads and moves them) encode the structure. Neither owns it alone.
-- **"Expose homebase from outside"** → not a routing question at all. It is blocked on
-  the auth rebuild: the token gate is empty by default and the service drives systemd.
+- **„Ein neues Feld in titans `/search`-Antwort"** → Contract-Änderung.
+  `contracts/titan.openapi.yaml` aktualisieren, dann brain-mcp (den Konsumenten) im
+  selben Feature. homebase ist nicht betroffen (nutzt nur `/health`).
+- **„Die `domain:`-Frontmatter-Regeln ändern"** → betrifft Inbox-Watcher (Schreiber),
+  brain-mcp (Watcher/Leser) und titan (Filter/Cache). Workspace-Plan + Entscheidung.
+- **„Ein MCP-Werkzeug umbenennen"** → brain-mcp-Contract; der Konsument ist Claude
+  selbst, also `contracts/brain-mcp.tools.json` und die Werkzeugbeschreibungen mitziehen.
+- **„Eine Spalte aufs Planka-Board"** → sowohl meeting-tickets (schreibt Karten hinein)
+  als auch planka-mcp (liest und bewegt sie) kodieren die Struktur. Keines besitzt sie
+  allein.
+- **„homebase von außen erreichbar machen"** → gar keine Routing-Frage. Es hängt am
+  Auth-Umbau: das Token-Gate ist standardmäßig leer und der Dienst steuert systemd.
 
-## Quick decision tree
+## Schneller Entscheidungsbaum
 
-- Engine-internal (chunking, ranking, Qdrant)? → **titan**, local rules.
-- Changes a titan endpoint? → contract → titan + brain-mcp (+ homebase if `/health`).
-- MCP tool surface? → **brain-mcp** (or **planka-mcp**) contract.
-- Note format / `domain:`? → **system-wide** → workspace plan first.
-- Touches the board's shape? → **system-wide** → both Planka repos.
-- Under `homebase/imported/`? → **wait for Phase 2.**
-- Needs a real host or address? → **the vault.**
+- Maschinenintern (Chunking, Ranking, Qdrant)? → **titan**, lokale Regeln.
+- Ändert einen titan-Endpunkt? → Contract → titan + brain-mcp (+ homebase bei `/health`).
+- MCP-Werkzeugfläche? → **brain-mcp**- (oder **planka-mcp**-)Contract.
+- Notizformat / `domain:`? → **systemweit** → erst Workspace-Plan.
+- Betrifft die Form des Boards? → **systemweit** → beide Planka-Repos.
+- Unter `homebase/imported/`? → **auf Phase 2 warten.**
+- Braucht einen echten Host oder eine Adresse? → **den Vault.**

@@ -1,28 +1,33 @@
-# Shared Conventions
+# Gemeinsame Konventionen
 
-> The conventions that must be identical across every service in `rag-system`. Each child
-> repo's `docs/ai/CONTEXT.md` should say "Conventions: see workspace `shared/conventions.md`"
-> rather than copying these, so there is one source of truth. Edit here only.
+> Die Konventionen, die über jeden Service in `stack-workspace` hinweg identisch sein
+> müssen. Die `docs/ai/CONTEXT.md` jedes Child-Repos soll „Konventionen: siehe Workspace
+> `shared/conventions.md`" sagen, statt sie zu kopieren — damit es eine einzige Wahrheit
+> gibt. Nur hier bearbeiten.
 
-## Stack (every service)
-- **Language:** Python 3.12+
-- **Package manager:** uv (`uv add` / `uv remove`, never hand-edit pyproject deps)
-- **Lint/format:** ruff — line length 100, double quotes (see `shared/ruff.toml`)
-- **Type checker:** mypy strict
-- **Tests:** pytest with coverage
-- **CI:** GitHub Actions per repo + the system CI here
-- **Pre-commit:** ruff, mypy, hygiene checks
+## Stack (jeder Service)
+- **Sprache:** Python 3.12+
+- **Paketmanager:** uv (`uv add` / `uv remove`, niemals die Abhängigkeiten in `pyproject` von Hand editieren)
+- **Lint/Format:** ruff — Zeilenlänge 100, doppelte Anführungszeichen (siehe `shared/ruff.toml`)
+- **Typprüfer:** mypy strict
+- **Tests:** pytest mit Coverage
+- **CI:** GitHub Actions je Repo plus die System-CI hier
+- **Pre-commit:** ruff, mypy, Hygiene-Prüfungen
 
-## Cross-service consistency rules
-- **Errors at boundaries:** services return structured errors (never raw tracebacks across
-  a contract). Each repo maps internal exceptions to its contract's error shape.
-- **Logging:** stdlib `logging`, structured where it crosses a boundary; never `print()`.
-- **Identifiers:** IDs that travel between services are defined once in the contract and
-  never reinterpreted locally.
-- **Time:** UTC everywhere on the wire; localize only at the edge.
-- **Versioning:** additive contract changes are backward-compatible; removals require a
-  consumer-first migration recorded in a workspace plan.
+## Regeln für Konsistenz über Service-Grenzen
+- **Fehler an den Grenzen:** Services geben strukturierte Fehler zurück, niemals rohe
+  Tracebacks über einen Contract hinweg. Jedes Repo bildet interne Ausnahmen auf die
+  Fehlerform seines Contracts ab.
+- **Logging:** stdlib `logging`, strukturiert dort, wo es eine Grenze überschreitet;
+  niemals `print()`.
+- **Bezeichner:** IDs, die zwischen Services reisen, werden einmal im Contract definiert
+  und lokal nie umgedeutet.
+- **Zeit:** UTC überall auf der Leitung; lokalisiert wird erst am Rand.
+- **Versionierung:** additive Contract-Änderungen sind rückwärtskompatibel; Entfernungen
+  brauchen eine Migration, die beim Konsumenten beginnt und in einem Workspace-Plan
+  festgehalten ist.
 
-## Commit & branch conventions (every repo)
-- Commit format: `<type>: <subject>` (feat, fix, refactor, test, docs, chore), imperative.
-- One logical change per commit; never mix a contract change with unrelated refactoring.
+## Commit- und Branch-Konventionen (jedes Repo)
+- Commit-Format: `<typ>: <betreff>` (feat, fix, refactor, test, docs, chore), Imperativ.
+- Eine logische Änderung pro Commit; niemals eine Contract-Änderung mit unbeteiligtem
+  Refactoring mischen.

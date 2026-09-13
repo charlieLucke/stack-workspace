@@ -1,32 +1,32 @@
-# Shared Agent Rules
+# Gemeinsame Agenten-Regeln
 
-> Canonical convention fragment. The single-repo template's `CLAUDE.md` already carries the
-> per-repo rules; this file is the **system-wide** delta that every child repo must also
-> honor. `./workspace.sh sync-shared` appends/refreshes this block inside each child's
-> `docs/ai/SYSTEM_LINK.md`. Edit it **here only** — never per repo.
+> Kanonisches Konventionsfragment. Die `CLAUDE.md` des Single-Repo-Templates trägt bereits die
+> Per-Repo-Regeln; diese Datei ist das **systemweite** Delta, das jedes Child-Repo zusätzlich
+> einhalten muss. `./workspace.sh sync-shared` hängt diesen Block in der `docs/ai/SYSTEM_LINK.md`
+> jedes Childs an bzw. aktualisiert ihn. Bearbeite ihn **nur hier** — niemals pro Repo.
 
-## You are part of a larger system
+## Du bist Teil eines größeren Systems
 
-This repo does not stand alone. It is one service in `stack-workspace`. Before changing
-anything that another repo can observe:
+Dieses Repo steht nicht für sich allein. Es ist ein Service in `stack-workspace`. Bevor du etwas
+änderst, das ein anderes Repo beobachten kann:
 
-- Check whether the change crosses a **contract**. If it does, stop — that is a workspace
-  (Opus-level) decision, not a local one. Surface it.
-- Your inputs and outputs at the boundary are defined in the workspace `contracts/`.
-  Treat them as fixed unless a workspace plan says otherwise.
-- Keep this repo **standalone-runnable**: don't import another service's code; talk to it
-  only through its contract.
+- Prüfe, ob die Änderung einen **Contract** kreuzt. Falls ja — anhalten: das ist eine Entscheidung
+  auf Workspace-Ebene (Opus-Ebene), keine lokale. Sprich sie an.
+- Deine Inputs und Outputs an der Grenze sind in den Workspace-`contracts/` definiert.
+  Behandle sie als fix, sofern ein Workspace-Plan nichts anderes sagt.
+- Halte dieses Repo **eigenständig lauffähig**: importiere keinen Code eines anderen Service;
+  sprich mit ihm nur über seinen Contract.
 
-## What stays local vs. goes up
+## Was lokal bleibt vs. nach oben geht
 
-- A decision about *this* repo's internals → local `docs/ai/DECISIONS.md`.
-- A decision affecting how this repo talks to others → workspace `docs/ai/DECISIONS.md`.
-- An out-of-scope idea touching only this repo → local `IDEAS.md`; touching others →
-  workspace `IDEAS.md`.
+- Eine Entscheidung über die Interna *dieses* Repos → lokale `docs/ai/DECISIONS.md`.
+- Eine Entscheidung darüber, wie dieses Repo mit anderen spricht → Workspace `docs/ai/DECISIONS.md`.
+- Eine Out-of-Scope-Idee, die nur dieses Repo betrifft → lokale `IDEAS.md`; betrifft sie andere →
+  Workspace `IDEAS.md`.
 
-## Boundary discipline
+## Grenzdisziplin
 
-- Don't widen this repo's public surface casually — every new endpoint/field is a contract.
-- Don't read another service's database, files, or internals directly.
-- When you change behavior at the boundary, the contract change lands *with* the code, and
-  every consumer is updated in the same workspace feature.
+- Erweitere die öffentliche Oberfläche dieses Repos nicht leichtfertig — jeder neue Endpunkt/jedes Feld ist ein Contract.
+- Lies nicht direkt die Datenbank, Dateien oder Interna eines anderen Service.
+- Wenn du Verhalten an der Grenze änderst, landet die Contract-Änderung *zusammen mit* dem Code,
+  und jeder Konsument wird im selben Workspace-Feature aktualisiert.

@@ -1,205 +1,205 @@
-# Plan: Startup reconcile for the vault index (titan note-hash → brain-watcher reconcile)
+# Plan: Startup-Reconcile für den Vault-Index (titan Note-Hash → brain-watcher-Reconcile)
 
-- **Date:** 2026-06-02
-- **Author:** Opus (planning)
-- **Implementer target:** Sonnet
+- **Datum:** 2026-06-02
+- **Autor:** Opus (Planung)
+- **Implementierer-Ziel:** Sonnet
 - **Status:** ready
-- **Tracks IDEAS.md:** "Startup reconcile for the vault index" (2026-06-02)
+- **Verfolgt IDEAS.md:** „Startup reconcile for the vault index" (2026-06-02)
 
-## Goal
-After a cold start, notes that were **edited, created, or deleted while brain-watcher was
-down** are never reconciled — `PollingObserver` snapshots the tree at `start()` and only emits
-*subsequent* events (`watcher.py:142` does no baseline scan). So edits made while the stack is
-off stay stale in titan's index until a manual `touch`/`ingest_note`. This feature adds a
-**one-shot reconcile pass on watcher startup** that diffs the vault against titan's index and
-re-ingests/deletes **only the delta**.
+## Ziel
+Nach einem Kaltstart werden Notizen, die **editiert, erstellt oder gelöscht wurden, während brain-watcher
+unten war**, nie reconciled — `PollingObserver` snapshottet den Baum bei `start()` und emittiert nur
+*nachfolgende* Events (`watcher.py:142` macht keinen Baseline-Scan). Edits, die gemacht wurden, während der Stack
+aus war, bleiben also in titans Index veraltet, bis ein manuelles `touch`/`ingest_note` erfolgt. Dieses Feature ergänzt einen
+**einmaligen Reconcile-Pass beim Watcher-Start**, der den Vault gegen titans Index diffed und
+**nur das Delta** neu-ingestet/löscht.
 
-The cheap, exact drift signal is a **per-note content hash** exposed by titan in `GET /notes`.
-The watcher computes the same hash locally and compares.
+Das günstige, exakte Drift-Signal ist ein **Per-Notiz-Content-Hash**, den titan in `GET /notes` bereitstellt.
+Der Watcher berechnet denselben Hash lokal und vergleicht.
 
-## Why this is a workspace-level plan
-It crosses a repo boundary **and** changes a published contract:
-- **titan** gains a new payload field and a new **additive** field on its `/notes` +
-  `/domains/{domain}/notes` responses → `contracts/titan.openapi.yaml` changes.
-- **brain-mcp** consumes that new field.
+## Warum das ein Plan auf Workspace-Ebene ist
+Es kreuzt eine Repo-Grenze **und** ändert einen veröffentlichten Contract:
+- **titan** erhält ein neues Payload-Feld und ein neues **additives** Feld auf seinen `/notes`- +
+  `/domains/{domain}/notes`-Responses → `contracts/titan.openapi.yaml` ändert sich.
+- **brain-mcp** konsumiert dieses neue Feld.
 
-Additive only — no consumer breaks. But the consumer (brain-mcp) cannot be verified until the
-provider field exists in titan's **live** `/openapi.json`, so this lands **provider-first** and
-is implemented in two stages.
+Nur additiv — kein Konsument bricht. Aber der Konsument (brain-mcp) kann nicht verifiziert werden, bis das
+Provider-Feld in titans **Live**-`/openapi.json` existiert, daher landet das **Provider-first** und
+wird in zwei Stages implementiert.
 
-## Affected repos & landing order
-1. **Stage 1 — `repos/titan` (provider).** Add `content_hash` to the chunk payload at ingest +
-   expose it on the notes responses. Update `contracts/titan.openapi.yaml` + `docs/ai/CONTRACTS.md`.
-   Must land **and go green (with titan running)** before Stage 2.
-2. **Stage 2 — `repos/brain-mcp` (consumer).** Mirror the field in its local schema, add the
-   reconcile pass to `VaultWatcher`, add tests.
+## Betroffene Repos & Landing-Reihenfolge
+1. **Stage 1 — `repos/titan` (Provider).** `content_hash` beim Ingest zum Chunk-Payload hinzufügen +
+   auf den Notes-Responses bereitstellen. `contracts/titan.openapi.yaml` + `docs/ai/CONTRACTS.md` aktualisieren.
+   Muss **landen und grün werden (mit laufendem titan)**, bevor Stage 2.
+2. **Stage 2 — `repos/brain-mcp` (Konsument).** Das Feld im lokalen Schema spiegeln, den
+   Reconcile-Pass zu `VaultWatcher` hinzufügen, Tests ergänzen.
 
-Each stage leaves `./workspace.sh check` green on its own.
+Jede Stage lässt `./workspace.sh check` für sich grün.
 
-## Decisions already made — do NOT re-decide
+## Bereits getroffene Entscheidungen — NICHT neu entscheiden
 
-### The drift signal is a content hash, NOT mtime
-- **`content_hash = sha256 of the note file's raw bytes on disk`**, hex digest.
-- **Why hash, not mtime:** the vault lives on a 9p mount (`/mnt/f`). mtime is unreliable across
-  the Windows↔WSL boundary and changes on `touch`/copy without a content change → false drift.
-  A content hash is exact: identical content ⇒ identical hash; drift only on a real edit.
-- **Hash the RAW file bytes** (`hashlib.sha256(file_path.read_bytes()).hexdigest()`), not the
-  frontmatter-stripped body. This is the contract both sides must agree on: titan hashes the
-  file it was handed; the watcher hashes the same file from disk — no need to replicate titan's
-  frontmatter parsing or chunking to get a matching hash.
+### Das Drift-Signal ist ein Content-Hash, NICHT mtime
+- **`content_hash = sha256 der rohen Bytes der Notiz-Datei auf der Platte`**, Hex-Digest.
+- **Warum Hash, nicht mtime:** der Vault liegt auf einem 9p-Mount (`/mnt/f`). mtime ist über
+  die Windows↔WSL-Grenze unzuverlässig und ändert sich bei `touch`/Kopie ohne Inhaltsänderung → falsches Drift.
+  Ein Content-Hash ist exakt: identischer Inhalt ⇒ identischer Hash; Drift nur bei einem echten Edit.
+- **Die ROHEN Datei-Bytes hashen** (`hashlib.sha256(file_path.read_bytes()).hexdigest()`), nicht den
+  frontmatter-bereinigten Body. Das ist der Contract, dem beide Seiten zustimmen müssen: titan hasht die
+  Datei, die ihm übergeben wurde; der Watcher hasht dieselbe Datei von der Platte — keine Notwendigkeit, titans
+  Frontmatter-Parsing oder Chunking zu replizieren, um einen passenden Hash zu bekommen.
 
-### titan side
-- **Compute the hash once per ingest** in `ingest_file_endpoint` (routes.py), not per chunk.
-  Pass it into `make_point`; store it under payload key `"content_hash"`.
-- **`make_point` signature gains a required `content_hash: str` parameter.** Its only caller is
-  `routes.py:291`; update that one call. The CLI/PDF path (`upsert_to_qdrant`) is **out of scope**
-  — PDFs are not watcher-managed (the watcher only handles `.md` via `/ingest/file`), so their
-  chunks simply carry no hash.
-- **`NoteInfo` gains `content_hash: str | None = None`** (schemas.py:104). Optional + nullable so
-  that chunks ingested *before* this change (no hash in payload) and PDF chunks return `null`.
-- **Both** `GET /notes` (routes.py:434) **and** `GET /domains/{domain}/notes` (routes.py:476) add
-  `"content_hash"` to their `with_payload` list and to the per-`source_path` aggregation (take the
-  first chunk's value via `setdefault`). Keep them symmetric.
-- **No `/notes` behaviour change otherwise** — same scroll loop, same 503 guard, same sort.
+### titan-Seite
+- **Den Hash einmal pro Ingest berechnen** in `ingest_file_endpoint` (routes.py), nicht pro Chunk.
+  Ihn an `make_point` übergeben; unter dem Payload-Key `"content_hash"` speichern.
+- **Die `make_point`-Signatur erhält einen erforderlichen `content_hash: str`-Parameter.** Ihr einziger Aufrufer ist
+  `routes.py:291`; diesen einen Call aktualisieren. Der CLI/PDF-Pfad (`upsert_to_qdrant`) ist **out of scope**
+  — PDFs sind nicht watcher-verwaltet (der Watcher behandelt nur `.md` via `/ingest/file`), ihre
+  Chunks tragen also einfach keinen Hash.
+- **`NoteInfo` erhält `content_hash: str | None = None`** (schemas.py:104). Optional + nullable, sodass
+  Chunks, die *vor* dieser Änderung ingestet wurden (kein Hash im Payload), und PDF-Chunks `null` zurückgeben.
+- **Sowohl** `GET /notes` (routes.py:434) **als auch** `GET /domains/{domain}/notes` (routes.py:476) fügen
+  `"content_hash"` zu ihrer `with_payload`-Liste und zur Per-`source_path`-Aggregation hinzu (den
+  Wert des ersten Chunks via `setdefault` nehmen). Symmetrisch halten.
+- **Sonst keine `/notes`-Verhaltensänderung** — gleiche Scroll-Schleife, gleicher 503-Guard, gleiche Sortierung.
 
-### brain-mcp side
-- **Mirror the field**: add `content_hash: str | None = None` to brain-mcp's local `NoteInfo`
-  (schemas.py:61). (Local copy is intentional decoupling — see the file's own docstring.)
-- **Reconcile runs once, on the worker thread, before the debounce loop.** Add a `_reconcile()`
-  method and call it at the very top of `_worker()` (watcher.py:195), wrapped in try/except so a
-  reconcile failure can never kill the worker. Rationale: it runs *after* `start()` has already
-  started the observer (so live events are captured concurrently and nothing is missed), it does
-  not block `start()`/signal handling, and it serializes naturally with the worker's own ingests.
-- **One attempt, best-effort.** If `_ensure_titan_available()` is False at reconcile time, log and
-  return — do not loop. Reconcile is downtime catch-up, not critical path; the live watcher +
-  cooldown handle ongoing edits. (Retry-when-titan-recovers is explicitly out of scope for v1.)
-- **Delta rules** (compare on `str(path.resolve())`; titan stores absolute `source_path` and both
-  `VAULT_ROOT`s resolve to `/mnt/f/vault`, so the strings match):
-  - **On disk, not in index** → ingest (`self._ingest(path)`).
-  - **In index, hash differs OR index hash is `null`** → ingest. (Null ⇒ legacy/PDF or
-    pre-hash chunk; re-ingest is a safe idempotent upsert-before-delete and backfills the hash.
-    Accept that the **first** reconcile after deploy re-ingests every not-yet-hashed note once.)
-  - **Hash matches** → skip (the whole point — no needless re-embedding).
-  - **In index, file gone** → delete (`self._handle_delete(path)`), **but only if** the
-    `source_path` is under `vault_root` **and** ends in `.md`. This guard protects CLI-ingested
-    PDFs and any out-of-vault entries from being wiped by the watcher.
-- **Reuse existing internals** for the actions: `_ingest` (has its own titan guard +
-  reschedule-on-error) and `_handle_delete` (queues if titan down). `_reconcile` only *computes*
-  the delta and dispatches; it does not re-implement ingest/delete or HTTP handling.
-- **Skip ignored paths** via the existing `_should_ignore(path, vault_root)` when walking the vault.
+### brain-mcp-Seite
+- **Das Feld spiegeln**: `content_hash: str | None = None` zu brain-mcps lokalem `NoteInfo`
+  (schemas.py:61) hinzufügen. (Die lokale Kopie ist bewusste Entkopplung — siehe den eigenen Docstring der Datei.)
+- **Reconcile läuft einmal, auf dem Worker-Thread, vor der Debounce-Schleife.** Eine `_reconcile()`-
+  Methode hinzufügen und sie ganz oben in `_worker()` aufrufen (watcher.py:195), in try/except gewickelt, sodass ein
+  Reconcile-Fehler den Worker nie killen kann. Begründung: es läuft *nachdem* `start()` den Observer bereits
+  gestartet hat (sodass Live-Events nebenläufig erfasst werden und nichts verpasst wird), es
+  blockiert nicht `start()`/Signal-Handling, und es serialisiert natürlich mit den eigenen Ingests des Workers.
+- **Ein Versuch, Best-Effort.** Ist `_ensure_titan_available()` zur Reconcile-Zeit False, loggen und
+  zurückkehren — nicht loopen. Reconcile ist Downtime-Catch-up, kein Critical Path; der Live-Watcher +
+  Cooldown handhaben laufende Edits. (Retry-wenn-titan-sich-erholt ist explizit out of scope für v1.)
+- **Delta-Regeln** (vergleichen auf `str(path.resolve())`; titan speichert absolutes `source_path` und beide
+  `VAULT_ROOT`s lösen zu `/mnt/f/vault` auf, die Strings passen also):
+  - **Auf der Platte, nicht im Index** → ingesten (`self._ingest(path)`).
+  - **Im Index, Hash weicht ab ODER Index-Hash ist `null`** → ingesten. (Null ⇒ Legacy/PDF oder
+    Pre-Hash-Chunk; Re-Ingest ist ein sicheres idempotentes upsert-before-delete und füllt den Hash nach.
+    Akzeptieren, dass der **erste** Reconcile nach dem Deploy jede noch-nicht-gehashte Notiz einmal neu-ingestet.)
+  - **Hash passt** → überspringen (genau der Sinn — kein unnötiges Re-Embedding).
+  - **Im Index, Datei weg** → löschen (`self._handle_delete(path)`), **aber nur wenn** der
+    `source_path` unter `vault_root` liegt **und** auf `.md` endet. Dieser Guard schützt CLI-ingestete
+    PDFs und etwaige Out-of-Vault-Einträge davor, vom Watcher gelöscht zu werden.
+- **Bestehende Interna für die Aktionen wiederverwenden**: `_ingest` (hat seinen eigenen titan-Guard +
+  Reschedule-on-Error) und `_handle_delete` (queued, wenn titan unten). `_reconcile` *berechnet* nur
+  das Delta und dispatcht; es reimplementiert nicht Ingest/Delete oder HTTP-Handling.
+- **Ignorierte Pfade überspringen** via das bestehende `_should_ignore(path, vault_root)` beim Durchlaufen des Vaults.
 
-## Steps
+## Schritte
 
-### Stage 1 — titan (provider)
+### Stage 1 — titan (Provider)
 
 **`repos/titan/src/titan/service/schemas.py`**
-1. Add `content_hash: str | None = None` to `NoteInfo` (after `chunk_count`, line ~107).
+1. `content_hash: str | None = None` zu `NoteInfo` hinzufügen (nach `chunk_count`, Zeile ~107).
 
 **`repos/titan/src/titan/ingest.py`**
-2. Change `make_point(chunk, file_path, domain, run_id)` → add `content_hash: str` param
-   (def at line 781). In the returned `PointStruct` payload (line ~818) add
-   `"content_hash": content_hash,`.
+2. `make_point(chunk, file_path, domain, run_id)` ändern → `content_hash: str`-Param hinzufügen
+   (def in Zeile 781). Im zurückgegebenen `PointStruct`-Payload (Zeile ~818)
+   `"content_hash": content_hash,` ergänzen.
 
 **`repos/titan/src/titan/service/routes.py`**
-3. Add `import hashlib` to the top-level imports (line ~20 block).
-4. In `ingest_file_endpoint`, after the file-exists check and before/after `read_markdown`
-   (around line 252), compute once:
+3. `import hashlib` zu den Top-Level-Importen hinzufügen (Zeile ~20-Block).
+4. In `ingest_file_endpoint`, nach dem File-Exists-Check und vor/nach `read_markdown`
+   (um Zeile 252), einmal berechnen:
    `content_hash = hashlib.sha256(file_path.read_bytes()).hexdigest()`.
-   (Only on the non-skip path — `indexed:false` deletes, it doesn't ingest, so no hash needed.)
-5. Update the call at line 291: `make_point(c, file_path, domain, run_id, content_hash)`.
-6. In `list_notes` (line 434): add `"content_hash"` to `with_payload=[...]` (line 453); add a
-   `hashes: dict[str, str | None] = {}` map and `hashes.setdefault(source_path, payload.get("content_hash"))`
-   inside the loop; build `NoteInfo(..., content_hash=hashes[sp])`.
-7. Apply the **same** three edits to `list_domain_notes` (line 476): `with_payload` (line 499),
-   the `hashes` map, and the `NoteInfo(...)` construction. Keep the two handlers symmetric.
-8. Update the module docstring endpoint list only if wording needs it (no new endpoint, so likely
-   no change).
+   (Nur auf dem Nicht-Skip-Pfad — `indexed:false` löscht, es ingestet nicht, also kein Hash nötig.)
+5. Den Call in Zeile 291 aktualisieren: `make_point(c, file_path, domain, run_id, content_hash)`.
+6. In `list_notes` (Zeile 434): `"content_hash"` zu `with_payload=[...]` (Zeile 453) hinzufügen; eine
+   `hashes: dict[str, str | None] = {}`-Map und `hashes.setdefault(source_path, payload.get("content_hash"))`
+   innerhalb der Schleife; `NoteInfo(..., content_hash=hashes[sp])` bauen.
+7. Die **gleichen** drei Edits auf `list_domain_notes` (Zeile 476) anwenden: `with_payload` (Zeile 499),
+   die `hashes`-Map und die `NoteInfo(...)`-Konstruktion. Die zwei Handler symmetrisch halten.
+8. Die Modul-Docstring-Endpunkt-Liste nur aktualisieren, wenn die Formulierung es braucht (kein neuer Endpunkt, also wahrscheinlich
+   keine Änderung).
 
-**`repos/titan/tests/integration/test_service.py`** (all `@pytest.mark.integration`)
-9. `test_notes_include_content_hash`: ingest one note via the existing `tmp_vault` +
-   `patch("titan.service.routes.VAULT_ROOT", tmp_vault)` + `POST /ingest/file` pattern (mirror
-   `test_ingest_new_note`, line 212). Then `GET /notes`; assert the note's `content_hash` is a
-   64-char hex string and equals `hashlib.sha256(note.read_bytes()).hexdigest()`.
-10. `test_content_hash_changes_on_edit`: ingest, read hash; rewrite the file with new content,
-    re-ingest, `GET /notes`; assert the `content_hash` changed.
+**`repos/titan/tests/integration/test_service.py`** (alle `@pytest.mark.integration`)
+9. `test_notes_include_content_hash`: eine Notiz via das bestehende `tmp_vault` +
+   `patch("titan.service.routes.VAULT_ROOT", tmp_vault)` + `POST /ingest/file`-Pattern ingesten (spiegelt
+   `test_ingest_new_note`, Zeile 212). Dann `GET /notes`; prüfen, dass der `content_hash` der Notiz ein
+   64-Zeichen-Hex-String ist und `hashlib.sha256(note.read_bytes()).hexdigest()` entspricht.
+10. `test_content_hash_changes_on_edit`: ingesten, Hash lesen; die Datei mit neuem Inhalt überschreiben,
+    neu-ingesten, `GET /notes`; prüfen, dass sich der `content_hash` geändert hat.
 
-**workspace contract**
-11. In `contracts/titan.openapi.yaml`, add `content_hash: { type: string, nullable: true }` to the
-    note object under **both** `/notes` and `/domains/{domain}/notes` 200 response schemas
-    (the `/notes` entry currently has only a one-line description — expand it to the explicit
-    schema mirroring `/domains/{domain}/notes` while adding the field, so both list the field).
-12. In `docs/ai/CONTRACTS.md`, update the titan "Surface" lines for `/notes` and
-    `/domains/{domain}/notes` to mention `content_hash` (sha256 of the note's raw bytes; null for
-    legacy/PDF chunks).
+**Workspace-Contract**
+11. In `contracts/titan.openapi.yaml` `content_hash: { type: string, nullable: true }` zum
+    Note-Objekt unter **beiden** `/notes`- und `/domains/{domain}/notes`-200-Response-Schemas hinzufügen
+    (der `/notes`-Eintrag hat aktuell nur eine Einzeiler-Beschreibung — ihn auf das explizite
+    Schema erweitern, das `/domains/{domain}/notes` spiegelt, während das Feld hinzugefügt wird, sodass beide das Feld listen).
+12. In `docs/ai/CONTRACTS.md` die titan-„Oberfläche"-Zeilen für `/notes` und
+    `/domains/{domain}/notes` aktualisieren, sodass sie `content_hash` erwähnen (sha256 der rohen Bytes der Notiz; null für
+    Legacy-/PDF-Chunks).
 
-### Stage 2 — brain-mcp (consumer) — only after Stage 1 is live & green
+### Stage 2 — brain-mcp (Konsument) — erst nachdem Stage 1 live & grün ist
 
 **`repos/brain-mcp/src/brain_mcp/schemas.py`**
-13. Add `content_hash: str | None = None` to `NoteInfo` (line 61).
+13. `content_hash: str | None = None` zu `NoteInfo` hinzufügen (Zeile 61).
 
 **`repos/brain-mcp/src/brain_mcp/watcher.py`**
-14. Add `import hashlib` (top of file).
-15. Add a `_reconcile(self) -> None` method implementing the delta rules above:
+14. `import hashlib` hinzufügen (Dateianfang).
+15. Eine `_reconcile(self) -> None`-Methode hinzufügen, die die obigen Delta-Regeln implementiert:
     - `if not self._ensure_titan_available(): log.info(...); return`.
     - `indexed = {n.source_path: n for n in self.titan_client.list_notes().notes}`.
-    - Walk `self.vault_root.rglob("*.md")`, skip `_should_ignore(p, self.vault_root)`; build
-      `on_disk = {str(p.resolve()): p}` and `local_hash = hashlib.sha256(p.read_bytes()).hexdigest()`.
-    - Ingest set: paths on disk where `key not in indexed` OR
-      `indexed[key].content_hash != local_hash` (this covers the null-hash case).
-    - Delete set: `key in indexed` and `key not in on_disk` and key endswith `.md` and
+    - `self.vault_root.rglob("*.md")` durchlaufen, `_should_ignore(p, self.vault_root)` überspringen;
+      `on_disk = {str(p.resolve()): p}` und `local_hash = hashlib.sha256(p.read_bytes()).hexdigest()` bauen.
+    - Ingest-Set: Pfade auf der Platte, wo `key not in indexed` ODER
+      `indexed[key].content_hash != local_hash` (das deckt den Null-Hash-Fall ab).
+    - Delete-Set: `key in indexed` und `key not in on_disk` und key endet mit `.md` und
       `Path(key).is_relative_to(self.vault_root)`.
-    - Dispatch: `self._ingest(p)` for ingests, `self._handle_delete(Path(key))` for deletes.
-    - Log a one-line summary (`reconcile: N ingested, M deleted, K unchanged`).
-16. Call `self._reconcile()` at the top of `_worker()` (line ~196), inside a `try/except Exception`
-    that logs and continues into the `while` loop. Guard so it runs once.
+    - Dispatch: `self._ingest(p)` für Ingests, `self._handle_delete(Path(key))` für Deletes.
+    - Eine Einzeiler-Zusammenfassung loggen (`reconcile: N ingested, M deleted, K unchanged`).
+16. `self._reconcile()` ganz oben in `_worker()` (Zeile ~196) aufrufen, innerhalb eines `try/except Exception`,
+    das loggt und in die `while`-Schleife fortfährt. Absichern, sodass es einmal läuft.
 
-**`repos/brain-mcp/tests/test_watcher.py`** (reuse the `mock_client` + `vault_root` fixtures)
-17. `test_reconcile_ingests_missing_note`: write `a.md` in `vault_root`;
+**`repos/brain-mcp/tests/test_watcher.py`** (die `mock_client` + `vault_root`-Fixtures wiederverwenden)
+17. `test_reconcile_ingests_missing_note`: `a.md` in `vault_root` schreiben;
     `mock_client.list_notes.return_value = NotesResponse(notes=[], total=0)`;
-    call `watcher._reconcile()`; assert `mock_client.ingest_file` called with `a.md`'s resolved path.
-18. `test_reconcile_reingests_changed_note`: write `a.md`; stub `list_notes` to return a `NoteInfo`
-    for `a.md` with a **wrong** `content_hash`; assert `ingest_file` called.
-19. `test_reconcile_skips_unchanged_note`: stub `list_notes` with the **correct**
-    `sha256(a.md.read_bytes())`; assert `ingest_file` NOT called.
-20. `test_reconcile_deletes_orphan`: no file on disk; `list_notes` returns a `NoteInfo` for
-    `<vault>/gone.md`; assert `delete_chunks` called for that path.
+    `watcher._reconcile()` aufrufen; prüfen, dass `mock_client.ingest_file` mit `a.md`s aufgelöstem Pfad aufgerufen wird.
+18. `test_reconcile_reingests_changed_note`: `a.md` schreiben; `list_notes` stubben, sodass es ein `NoteInfo`
+    für `a.md` mit einem **falschen** `content_hash` zurückgibt; prüfen, dass `ingest_file` aufgerufen wird.
+19. `test_reconcile_skips_unchanged_note`: `list_notes` mit dem **korrekten**
+    `sha256(a.md.read_bytes())` stubben; prüfen, dass `ingest_file` NICHT aufgerufen wird.
+20. `test_reconcile_deletes_orphan`: keine Datei auf der Platte; `list_notes` gibt ein `NoteInfo` für
+    `<vault>/gone.md` zurück; prüfen, dass `delete_chunks` für diesen Pfad aufgerufen wird.
 21. `test_reconcile_skips_when_titan_down`: `mock_client.health.side_effect = httpx.ConnectError`;
-    assert `list_notes`/`ingest_file` NOT called.
+    prüfen, dass `list_notes`/`ingest_file` NICHT aufgerufen werden.
 
-## Tracking (multi-repo feature)
-The implementer points workspace `docs/ai/CURRENT_TASK.md` at this plan, and each touched repo's
-`docs/ai/CURRENT_TASK.md` (titan, then brain-mcp) back at it; writes `HANDOFF.md` if interrupted
-between stages (workspace rule 2). The natural handoff point is **between Stage 1 and Stage 2**.
+## Tracking (Multi-Repo-Feature)
+Der Implementierer zeigt die Workspace-`docs/ai/CURRENT_TASK.md` auf diesen Plan und die
+`docs/ai/CURRENT_TASK.md` jedes berührten Repos (titan, dann brain-mcp) zurück darauf; schreibt `HANDOFF.md`, falls unterbrochen
+zwischen den Stages (Workspace-Regel 2). Der natürliche Handoff-Punkt ist **zwischen Stage 1 und Stage 2**.
 
-## Verification
-- **Stage 1 static:** `cd repos/titan && make check` (ruff + mypy-strict + pytest, incl. the 2 new
-  integration tests).
-- **Stage 1 runtime (required — this is a contract change):** titan + Qdrant **up**. Ingest a note,
-  `GET /notes` shows a real `content_hash`. Then from the workspace `./workspace.sh contracts` →
-  titan **OK** (live `/openapi.json` now carries `content_hash`, matches the committed contract).
-  Static green ≠ contract verified.
-- **Stage 2 static:** `cd repos/brain-mcp && make check` (incl. the 5 new reconcile tests).
-- **Stage 2 runtime (the real proof):** full stack up. With the watcher **stopped**, edit a note
-  and delete another; start `brain-watcher`; confirm the edited note is re-ingested and the deleted
-  note's chunks are removed (check logs + `GET /notes`), while unchanged notes are NOT re-embedded.
-- `./workspace.sh check` green overall after each stage.
+## Verifikation
+- **Stage 1 statisch:** `cd repos/titan && make check` (ruff + mypy-strict + pytest, inkl. der 2 neuen
+  Integrationstests).
+- **Stage 1 Runtime (erforderlich — das ist eine Contract-Änderung):** titan + Qdrant **oben**. Eine Notiz ingesten,
+  `GET /notes` zeigt einen echten `content_hash`. Dann aus dem Workspace `./workspace.sh contracts` →
+  titan **OK** (Live-`/openapi.json` trägt jetzt `content_hash`, passt zum committeten Contract).
+  Statisch grün ≠ Contract-verifiziert.
+- **Stage 2 statisch:** `cd repos/brain-mcp && make check` (inkl. der 5 neuen Reconcile-Tests).
+- **Stage 2 Runtime (der echte Beweis):** voller Stack oben. Mit dem Watcher **gestoppt**, eine Notiz editieren
+  und eine andere löschen; `brain-watcher` starten; bestätigen, dass die editierte Notiz neu-ingestet und die gelöschte
+  Notiz-Chunks entfernt werden (Logs + `GET /notes` prüfen), während unveränderte Notizen NICHT neu-eingebettet werden.
+- `./workspace.sh check` insgesamt grün nach jeder Stage.
 
-## Out of scope
-- Hashing PDF/CLI ingests (`upsert_to_qdrant`) — PDFs aren't watcher-managed.
-- A persisted/incremental baseline — reconcile reads each `.md` once at startup (fine for a
-  personal vault of tens–hundreds of notes).
-- Retrying reconcile later if titan is down at startup (v1 is one best-effort attempt).
-- Any mtime-based optimization, `/notes` pagination, or a dashboard view of drift.
+## Out of Scope
+- PDF-/CLI-Ingests hashen (`upsert_to_qdrant`) — PDFs sind nicht watcher-verwaltet.
+- Eine persistierte/inkrementelle Baseline — Reconcile liest jede `.md` einmal beim Start (in Ordnung für einen
+  persönlichen Vault von zehn–hundert Notizen).
+- Reconcile später erneut versuchen, wenn titan beim Start unten ist (v1 ist ein Best-Effort-Versuch).
+- Jede mtime-basierte Optimierung, `/notes`-Pagination oder eine Dashboard-Ansicht von Drift.
 
-## Files to touch (checklist)
-**Stage 1 — titan + contract**
+## Zu berührende Dateien (Checkliste)
+**Stage 1 — titan + Contract**
 - [ ] `repos/titan/src/titan/service/schemas.py` — `NoteInfo.content_hash`
-- [ ] `repos/titan/src/titan/ingest.py` — `make_point` param + payload key
-- [ ] `repos/titan/src/titan/service/routes.py` — hash compute + `make_point` call + both notes handlers
-- [ ] `repos/titan/tests/integration/test_service.py` — 2 tests
-- [ ] `contracts/titan.openapi.yaml` — `content_hash` on `/notes` + `/domains/{domain}/notes`
-- [ ] `docs/ai/CONTRACTS.md` — titan surface lines
+- [ ] `repos/titan/src/titan/ingest.py` — `make_point`-Param + Payload-Key
+- [ ] `repos/titan/src/titan/service/routes.py` — Hash-Berechnung + `make_point`-Call + beide Notes-Handler
+- [ ] `repos/titan/tests/integration/test_service.py` — 2 Tests
+- [ ] `contracts/titan.openapi.yaml` — `content_hash` auf `/notes` + `/domains/{domain}/notes`
+- [ ] `docs/ai/CONTRACTS.md` — titan-Oberflächen-Zeilen
 **Stage 2 — brain-mcp**
 - [ ] `repos/brain-mcp/src/brain_mcp/schemas.py` — `NoteInfo.content_hash`
-- [ ] `repos/brain-mcp/src/brain_mcp/watcher.py` — `_reconcile()` + call in `_worker()`
-- [ ] `repos/brain-mcp/tests/test_watcher.py` — 5 tests
+- [ ] `repos/brain-mcp/src/brain_mcp/watcher.py` — `_reconcile()` + Call in `_worker()`
+- [ ] `repos/brain-mcp/tests/test_watcher.py` — 5 Tests

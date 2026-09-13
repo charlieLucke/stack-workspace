@@ -1,80 +1,80 @@
-# Contracts — rag-system (FILLED EXAMPLE)
+# Contracts — rag-system (AUSGEFÜLLTES BEISPIEL)
 
-> The two real coupling surfaces in this system: titan's HTTP API and brain-mcp's MCP
-> tools. Plus one implicit contract — the vault note format — that ties three repos together.
+> Die zwei realen Kopplungsflächen in diesem System: titans HTTP-API und brain-mcps MCP-
+> Tools. Plus ein impliziter Contract — das Vault-Notiz-Format — der drei Repos zusammenbindet.
 
 ---
 
-## Contract: titan HTTP API
+## Contract: titan HTTP-API
 
 - **Provider:** repos/titan
-- **Consumers:** repos/brain-mcp (search + ingest), repos/brain-dashboard (`/health` only)
-- **Machine-readable:** `contracts/titan.openapi.yaml`
-- **Transport:** HTTP, `127.0.0.1:8765` (local only)
+- **Konsumenten:** repos/brain-mcp (Suche + Ingest), repos/brain-dashboard (nur `/health`)
+- **Maschinenlesbar:** `contracts/titan.openapi.yaml`
+- **Transport:** HTTP, `127.0.0.1:8765` (nur lokal)
 
-### Surface
-- `GET /health` — BGE-M3 loaded? Qdrant reachable? VRAM use, collection name, ColBERT dim.
-- `POST /search` — hybrid search `{query, domain?, top_k}` → ranked chunks.
-- `POST /ingest/file` — (re)index one file.
-- `GET /domains` — domains with chunk counts.
-- `GET /notes` — indexed notes grouped by file; each entry includes `source_path`, `domain`, `chunk_count`, and `content_hash` (sha256 of the note's raw bytes; `null` for legacy/PDF chunks ingested before this field was introduced).
-- `GET /domains/{domain}/notes` — notes for a single domain; same fields as `/notes` (incl. `content_hash`); unknown domain → 200 with empty list.
-- `POST /find_related` — semantically related documents.
-- `DELETE /chunks` — remove a file's chunks.
-- `GET /stats` — runtime metrics: uptime, total chunks, domain count, cache hit rate, search-latency p50/p95/max, cache entry count, last-ingest age. In-memory counters, reset on restart; answers even when degraded.
+### Oberfläche
+- `GET /health` — BGE-M3 geladen? Qdrant erreichbar? VRAM-Nutzung, Collection-Name, ColBERT-Dim.
+- `POST /search` — hybride Suche `{query, domain?, top_k}` → gerankte Chunks.
+- `POST /ingest/file` — eine Datei (neu) indexieren.
+- `GET /domains` — Domains mit Chunk-Anzahl.
+- `GET /notes` — indexierte Notizen nach Datei gruppiert; jeder Eintrag enthält `source_path`, `domain`, `chunk_count` und `content_hash` (sha256 der rohen Bytes der Notiz; `null` für Legacy-/PDF-Chunks, die vor Einführung dieses Felds ingestet wurden).
+- `GET /domains/{domain}/notes` — Notizen für eine einzelne Domain; gleiche Felder wie `/notes` (inkl. `content_hash`); unbekannte Domain → 200 mit leerer Liste.
+- `POST /find_related` — semantisch verwandte Dokumente.
+- `DELETE /chunks` — die Chunks einer Datei entfernen.
+- `GET /stats` — Runtime-Metriken: Uptime, Chunks gesamt, Domain-Anzahl, Cache-Hit-Rate, Such-Latenz p50/p95/max, Cache-Eintragsanzahl, Alter des letzten Ingests. In-Memory-Counter, beim Neustart zurückgesetzt; antwortet auch im degradierten Zustand.
 
-### Invariants & gotchas
-- titan binds **127.0.0.1 only** — single-user, no auth/TLS at this layer by design.
-- Re-ingest is **upsert-before-delete** (new `run_id`); consumers must not assume an atomic
-  swap window.
-- `domain` is an optional filter on `/search` and the cache-invalidation key on ingest.
+### Invarianten & Stolperfallen
+- titan bindet **nur 127.0.0.1** — Single-User, kein Auth/TLS auf dieser Ebene by design.
+- Re-Ingest ist **upsert-before-delete** (neue `run_id`); Konsumenten dürfen kein atomares
+  Swap-Fenster annehmen.
+- `domain` ist ein optionaler Filter auf `/search` und der Cache-Invalidierungs-Key beim Ingest.
 
 ---
 
-## Contract: brain-mcp MCP tools
+## Contract: brain-mcp MCP-Tools
 
 - **Provider:** repos/brain-mcp
-- **Consumers:** Claude (via the custom connector over Tailscale Funnel)
-- **Machine-readable:** `contracts/brain-mcp.tools.json`
-- **Transport:** MCP over HTTP, `:9100`, GitHub-OAuth gated (allowlist `charlieLucke`)
+- **Konsumenten:** Claude (über den Custom Connector via Tailscale Funnel)
+- **Maschinenlesbar:** `contracts/brain-mcp.tools.json`
+- **Transport:** MCP über HTTP, `:9100`, GitHub-OAuth-gegatet (Allowlist `charlieLucke`)
 
-### Surface
-Six tools: `query_knowledge`, `ingest_note`, `list_domains`, `find_related`, `list_notes`,
-`delete_note`. Each maps to one or more titan HTTP calls.
+### Oberfläche
+Sechs Tools: `query_knowledge`, `ingest_note`, `list_domains`, `find_related`, `list_notes`,
+`delete_note`. Jedes mappt auf einen oder mehrere titan-HTTP-Calls.
 
-### Invariants & gotchas
-- Query decomposition is **not** used on the MCP path (Claude decomposes itself).
-- Tool results must stay stable for the connector; renaming a tool breaks Claude's calls.
-- "Titan unreachable" from a tool means the titan→Qdrant chain below is down, not an MCP bug.
-
----
-
-## Contract: vault note format (implicit)
-
-- **Provider/Writers:** repos/obsidian-inbox-watcher (and the human editing notes)
-- **Consumers:** repos/brain-mcp (watcher → titan `/ingest/file`), repos/titan (domain filter)
-- **Machine-readable:** none — enforced by convention, documented here.
-
-### Surface
-A Markdown note with YAML frontmatter containing a `domain:` field (`lernen` / `projekte` /
-`system` / `business`). `indexed: false` opts a note out (and removes its chunks).
-
-### Invariants & gotchas
-- **No `domain:` → not indexed.** This is the single most important shared invariant.
-- Changing the allowed domain values touches all three repos → a workspace-level change.
+### Invarianten & Stolperfallen
+- Query-Zerlegung wird auf dem MCP-Pfad **nicht** genutzt (Claude zerlegt selbst).
+- Tool-Ergebnisse müssen für den Connector stabil bleiben; ein Tool umzubenennen bricht Claudes Calls.
+- „Titan unreachable" aus einem Tool bedeutet, die titan→Qdrant-Kette darunter ist unten, kein MCP-Bug.
 
 ---
 
-## Contract: workspace-mcp MCP tools
+## Contract: Vault-Notiz-Format (implizit)
+
+- **Provider/Writer:** repos/obsidian-inbox-watcher (und der Mensch, der Notizen editiert)
+- **Konsumenten:** repos/brain-mcp (Watcher → titan `/ingest/file`), repos/titan (Domain-Filter)
+- **Maschinenlesbar:** keine — durch Konvention erzwungen, hier dokumentiert.
+
+### Oberfläche
+Eine Markdown-Notiz mit YAML-Frontmatter, das ein `domain:`-Feld enthält (`lernen` / `projekte` /
+`system` / `business`). `indexed: false` meldet eine Notiz ab (und entfernt ihre Chunks).
+
+### Invarianten & Stolperfallen
+- **Kein `domain:` → nicht indexiert.** Das ist die wichtigste gemeinsame Invariante.
+- Die erlaubten Domain-Werte zu ändern, berührt alle drei Repos → eine Änderung auf Workspace-Ebene.
+
+---
+
+## Contract: workspace-mcp MCP-Tools
 
 - **Provider:** repos/workspace-mcp
-- **Consumers:** a planning chat via the custom connector
-- **Machine-readable:** `contracts/workspace-mcp.tools.json`
-- **Transport:** MCP over HTTP, `:9300`, GitHub-OAuth gated (allowlist `charlieLucke`)
+- **Konsumenten:** ein Planungs-Chat über den Custom Connector
+- **Maschinenlesbar:** `contracts/workspace-mcp.tools.json`
+- **Transport:** MCP über HTTP, `:9300`, GitHub-OAuth-gegatet (Allowlist `charlieLucke`)
 
-### Surface
-Eight tools: `list_repos`, `get_system_map`, `get_routing`, `get_contracts_overview`, `list_contracts`, `get_contract`, `dependency_graph`, and `read_repo_file`.
+### Oberfläche
+Acht Tools: `list_repos`, `get_system_map`, `get_routing`, `get_contracts_overview`, `list_contracts`, `get_contract`, `dependency_graph` und `read_repo_file`.
 
-### Invariants & gotchas
-- **Hard Read-Only Rule:** Under no circumstances should any write, command execution, or mutating tools be added.
-- **Path Sandboxing:** `read_repo_file` and `get_contract` must enforce strict path checks to prevent directory traversal (`..` escapes).
+### Invarianten & Stolperfallen
+- **Harte Read-Only-Regel:** Unter keinen Umständen sollten Schreib-, Befehlsausführungs- oder mutierende Tools hinzugefügt werden.
+- **Pfad-Sandboxing:** `read_repo_file` und `get_contract` müssen strikte Pfadprüfungen erzwingen, um Directory-Traversal (`..`-Escapes) zu verhindern.
