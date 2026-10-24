@@ -39,6 +39,14 @@ paths:
                 query: { type: string }
                 domain: { type: string, nullable: true }
                 top_k: { type: integer, default: 10 }
+                kompakt:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Additiv seit 2026-10-24. Kuerzt jeden Treffer extraktiv auf die
+                    Zeilen, die der Frage am naechsten sind; Luecken als "[…]".
+                    Kein Text wird umformuliert.
+                kompakt_zeichen: { type: integer, default: 600, minimum: 100, maximum: 4000 }
       responses:
         "200":
           description: Ranked chunks

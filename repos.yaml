@@ -21,7 +21,7 @@ defaults:
 
 services:
   - name: titan
-    role: RAG engine — ingest (Docling → Late Chunking → BGE-M3) + hybrid search over Qdrant
+    role: RAG engine — ingest (Docling → chunking → BGE-M3, one chunk at a time with a title header) + hybrid search over Qdrant
     consumes: []                       # bottom of the stack; talks only to local infra (Qdrant, GPU)
     exposes: contracts/titan.openapi.yaml
     contract_source: http://127.0.0.1:8765/openapi.json  # live spec to diff for drift

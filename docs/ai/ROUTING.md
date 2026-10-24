@@ -11,7 +11,7 @@
 
 | Wenn die Änderung … betrifft | Repo | Anmerkung |
 |------------------------------|------|-----------|
-| Chunking, Embeddings, Late Chunking, BGE-M3 | **titan** | Maschineninternes — lokale Entscheidung |
+| Chunking, Embeddings (einzeln mit Kopfzeile, Late Chunking schaltbar), BGE-M3, Retrieval-Eval | **titan** | Maschineninternes — lokale Entscheidung |
 | Hybride Suche / RRF / Ranking | **titan** | ändert sich die `/search`-Antwortform → Contract |
 | Qdrant-Collection / Vektoren / Payload-Index | **titan** | nur titan schreibt Qdrant |
 | titans HTTP-Endpunkte (Pfad/Parameter/Antwort) | **titan** | **Contract-Änderung** → `contracts/titan.openapi.yaml` + brain-mcp + homebase |

@@ -50,3 +50,19 @@ die Systemschicht obendrauf, statt Per-Repo-Tooling neu zu erfinden.
 **Begründung:** Um Planungs-Agenten (wie Opus) zu erlauben, die Workspace-Struktur, Routing, Contracts und Repository-Code zu inspizieren, ohne manuelles Copy-Pasting. Es läuft nur zur Design-Zeit, getrennt vom RAG-Runtime-Pfad, und hält die RAG-Services sauber und entkoppelt.
 **Erwogene Alternativen:** Die Workspace-Tools in `brain-mcp` zu legen (verworfen, weil `brain-mcp` das Runtime-Vault-RAG behandelt und keine Workspace-Level-Entwicklungs-/Introspektions-Fähigkeiten enthalten sollte; anderer Lebenszyklus/Deployment-Takt).
 **Konsequenzen:** Ein neuer Service wird in `repos.yaml` auf Port 9300 registriert. Er muss eine strikte Read-Only-Grenze erzwingen, um Remote-Code-Execution oder unautorisierte Repository-Mutationen zu vermeiden.
+
+## 2026-10-24: titan-Contract additiv um `kompakt` erweitert; Late Chunking aus
+**Entscheidung:** `POST /search` nimmt zusätzlich `kompakt` (Default `false`) und
+`kompakt_zeichen` (Default 600). Additiv: Ein Aufrufer, der die Felder nicht kennt,
+bekommt dieselbe Antwort wie vorher. brain-mcp nutzt sie vorerst nicht. Unabhängig
+davon bettet titan seit demselben Tag jeden Chunk einzeln mit Kopfzeile ein statt per
+Late Chunking — eine titan-interne Entscheidung (ROUTING: Maschineninternes), hier nur
+vermerkt, weil sie die Trefferqualität des Connectors bestimmt.
+**Begründung:** Gemessen in titan mit einem Goldset von 196 Fragen
+(`titan.eval.vault_eval`): Die richtige Stelle unter den ersten fünf Treffern stieg von
+38 % auf 81 %. Mit dieser Quote reicht der Connector-Default `top_k = 5`, und `kompakt`
+ist eine Option zum Sparen, kein Ausgleich mehr. Details in
+`repos/titan/docs/ai/DECISIONS.md`.
+**Konsequenzen:** Wer `kompakt` in brain-mcp einschaltet, kauft rund 45 % weniger
+Tokens je Suche gegen 2 bis 3 Punkte Trefferquote und ~300 ms Latenz; das ist eine
+eigene Entscheidung, noch nicht getroffen.
