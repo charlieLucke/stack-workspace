@@ -18,7 +18,8 @@ from pathlib import Path
 import manifest  # sibling module in scripts/
 
 READ_LINE = (
-    "`docs/ai/SYSTEM_LINK.md` — if this repo is part of a larger system, read it first"
+    "`docs/ai/SYSTEM_LINK.md`: this repo is part of a larger system; read it before changing "
+    "a public interface"
 )
 START = "<!-- SHARED-AGENT-RULES:START"
 END = "<!-- SHARED-AGENT-RULES:END -->"

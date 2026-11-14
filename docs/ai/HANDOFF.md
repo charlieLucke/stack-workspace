@@ -20,7 +20,7 @@ Modell: Gemini 3.5 Flash
 - [x] alle Konsumenten aktualisiert
 - [x] `./workspace.sh contracts` grün
 
-## Offene Fragen / nötige Entscheidungen (Opus)
+## Offene Fragen / nötige Entscheidungen
 - Keine.
 
 ## Notizen / entdeckte Stolperfallen

@@ -1,6 +1,6 @@
 # Gemeinsame Agenten-Regeln
 
-> Kanonisches Konventionsfragment. Die `CLAUDE.md` des Single-Repo-Templates trägt bereits die
+> Kanonisches Konventionsfragment. Die `AGENTS.md` des Single-Repo-Templates trägt bereits die
 > Per-Repo-Regeln; diese Datei ist das **systemweite** Delta, das jedes Child-Repo zusätzlich
 > einhalten muss. `./workspace.sh sync-shared` hängt diesen Block in der `docs/ai/SYSTEM_LINK.md`
 > jedes Childs an bzw. aktualisiert ihn. Bearbeite ihn **nur hier** — niemals pro Repo.
@@ -11,7 +11,7 @@ Dieses Repo steht nicht für sich allein. Es ist ein Service in `stack-workspace
 änderst, das ein anderes Repo beobachten kann:
 
 - Prüfe, ob die Änderung einen **Contract** kreuzt. Falls ja — anhalten: das ist eine Entscheidung
-  auf Workspace-Ebene (Opus-Ebene), keine lokale. Sprich sie an.
+  auf Workspace-Ebene (Planungsebene), keine lokale. Sprich sie an.
 - Deine Inputs und Outputs an der Grenze sind in den Workspace-`contracts/` definiert.
   Behandle sie als fix, sofern ein Workspace-Plan nichts anderes sagt.
 - Halte dieses Repo **eigenständig lauffähig**: importiere keinen Code eines anderen Service;
