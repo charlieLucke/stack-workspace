@@ -35,7 +35,7 @@ Repo-übergreifende Koordination läuft über Contracts, Workspace-Pläne und `w
 **Begründung:** Hält Repos austauschbar und unabhängig testbar; macht Brüche erkennbar
 (`workspace.sh contracts`) statt still.
 **Konsequenzen:** Jede veröffentlichte Schnittstelle braucht einen Contract-Eintrag; Contract-Änderungen sind
-Opus-Ebene und müssen alle Konsumenten aktualisieren.
+Planungsebene und müssen alle Konsumenten aktualisieren.
 
 ## 2026-XX-XX: Jeder Service wird aus dem Single-Repo-Template gebaut
 **Entscheidung:** Neue Services werden aus `charlieLucke/python-template` via

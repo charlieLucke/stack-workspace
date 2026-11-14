@@ -19,7 +19,7 @@ Das koordinierende Workspace-Repo hält das Repo-übergreifende Gesamtbild:
 - Repo-übergreifende Entscheidungen → Workspace `docs/ai/DECISIONS.md`
 
 ## Regeln, die nichts überschreiben, aber eine Sache ergänzen
-Folge für alle lokale Arbeit der eigenen `CLAUDE.md` dieses Repos. Die einzige Ergänzung daraus,
+Folge für alle lokale Arbeit der eigenen `AGENTS.md` dieses Repos (ältere Repos: `CLAUDE.md`). Die einzige Ergänzung daraus,
 Teil eines Systems zu sein: **eine Änderung an der Grenze dieses Repos (seinem exponierten Contract)
 ist eine Entscheidung auf Workspace-Ebene** — anhalten und ansprechen, statt das Interface hier zu ändern.
 

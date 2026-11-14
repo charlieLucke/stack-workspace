@@ -1,12 +1,13 @@
-# Planungs-Brief — Pläne für dieses System erstellen (lade mich in einen Opus-Chat)
+# Planungs-Brief — Pläne für dieses System erstellen (lade mich in eine Planungs-Sitzung)
 
-> **Verwendung:** öffne einen Chat mit einem starken Reasoning-Modell (Opus) am Workspace-Root,
+> **Verwendung:** öffne eine Sitzung mit dem stärksten verfügbaren Modell am Workspace-Root,
 > füge diese Datei ein/an und sag, was du willst („Ich will Feature X"). Diese Datei macht das
 > Modell zum **Architekten** für dieses Multi-Repo-System: es brainstormt, erdet die Idee
 > im echten Code, schreibt einen Plan nach `docs/ai/plans/` und emittiert den Prompt, der einen
-> günstigeren Implementierer (Sonnet) durch die Workspace-`CLAUDE.md` führt.
+> günstigeren Implementierer durch die Workspace-`AGENTS.md` führt. In Claude Code leistet der
+> Plan Mode mit dem Modell `opusplan` dieselbe Trennung ohne zweiten Chat.
 >
-> Du (Opus) schreibst hier **keinen** Produktivcode. Du produzierst zwei Artefakte: einen **Plan**
+> Du schreibst hier **keinen** Produktivcode. Du produzierst zwei Artefakte: einen **Plan**
 > und einen **Implementierer-Prompt**. Wenn du Dateien schreiben kannst, speichere den Plan unter
 > `docs/ai/plans/`; wenn nicht (ein reiner Chat), gib **beide** als gefenste Markdown-Blöcke
 > aus, damit der Nutzer sie am angegebenen Pfad speichert.
@@ -78,7 +79,7 @@ auflösen (Status-Codes, leerer/unbekannter Input, Fehlerbehandlung). Hier verdi
 ### 3. Die Flughöhe klassifizieren
 - Berührt **nur die Interna eines Repos** (kein Contract, kein anderes Repo) → der Plan lebt in
   `repos/<name>/docs/ai/plans/`, und du kannst vollständig innerhalb dieses Repos unter dessen eigener
-  `CLAUDE.md` planen *und* implementieren. Erzwinge nicht die volle Workspace-Zeremonie bei einer trivialen lokalen
+  `AGENTS.md` planen *und* implementieren. Erzwinge nicht die volle Workspace-Zeremonie bei einer trivialen lokalen
   Änderung — die Schichten darunter verdienen ihren Platz nur an Grenzen.
 - Berührt einen **Contract oder mehrere Repos** → der Plan lebt im **Workspace**-
   `docs/ai/plans/`, und die Änderung ist eine Entscheidung auf Workspace-Ebene.
@@ -92,7 +93,7 @@ Nach `docs/ai/plans/<JJJJ-MM-TT>_<slug>.md` speichern, mit dem Format unten.
 
 ### 5. Den Implementierer-Prompt emittieren
 Beende deine Antwort mit dem einfügefertigen Prompt (Template unten), den der Nutzer in einen
-frischen Implementierer-(Sonnet-)Chat einwirft.
+frischen Implementierer-Chat einwirft.
 
 ---
 
@@ -139,7 +140,7 @@ Das System ist gebaut, um Risiko zu *absorbieren*, nicht zu vermeiden — nutze 
 
 ```markdown
 # Plan: <Titel>
-- Datum / Autor (Opus) / Implementierer-Ziel / Status: ready
+- Datum / Autor / Implementierer-Ziel / Status: ready
 
 ## Ziel
 Ein Absatz: was und warum.
@@ -197,15 +198,15 @@ Was das bewusst NICHT tut.
 
 ## Der Implementierer-Prompt — diesen am Ende emittieren
 
-Die Lücken füllen und ihn dem Nutzer geben, damit er ihn in einen frischen Implementierer-(z. B. Sonnet-)Chat einfügt,
+Die Lücken füllen und ihn dem Nutzer geben, damit er ihn in einen frischen Implementierer-Chat einfügt,
 gestartet **innerhalb von WSL** am Workspace-Root (sodass `make`, `uv`, `git`, `./workspace.sh` laufen):
 
 ```
-You are working in the multi-repo workspace <SYSTEM> (cwd = workspace root). Read CLAUDE.md
+You are working in the multi-repo workspace <SYSTEM> (cwd = workspace root). Read AGENTS.md
 first, then docs/ai/ROUTING.md, then the plan docs/ai/plans/<FILE>.
 
 Implement that plan: make the code change(s), update the contract(s), and verify. For
-implementation style, follow the target repo's own repos/<NAME>/CLAUDE.md and
+implementation style, follow the target repo's own repos/<NAME>/AGENTS.md and
 docs/ai/CONTEXT.md. Stick to the plan; flag any deviation explicitly rather than improvising.
 
 Finish: `cd repos/<NAME> && make check` must be green, and from the workspace
@@ -213,5 +214,5 @@ Finish: `cd repos/<NAME> && make check` must be green, and from the workspace
 ```
 
 Für eine **echte Single-Repo-Aufgabe ohne Contract-Auswirkung** das Workspace-Framing überspringen:
-den Implementierer in `repos/<NAME>` starten und ihn auf die eigene `CLAUDE.md` und
+den Implementierer in `repos/<NAME>` starten und ihn auf die eigene `AGENTS.md` und
 `docs/ai/CONTEXT.md` dieses Repos zeigen. Der obige Workspace-Prompt ist für grenzüberschreitende Arbeit.

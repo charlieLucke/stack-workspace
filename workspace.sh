@@ -92,7 +92,7 @@ cmd_new() {  ## Scaffold a new service from the template and register it: new <n
   fi
   ( cd "$path" && git init -q -b main && git add -A && git commit -qm "chore: scaffold $name from template" )
   ok "created repos/$name"
-  printf '%s\n' "Next: add it to repos.yaml under services: (name/role/consumes/exposes/port), then ./workspace.sh check"
+  printf '%s\n' "Next: add it to repos.yaml under services: (name/role/consumes/exposes/port), then ./workspace.sh adopt $name and ./workspace.sh check"
 }
 
 cmd_adopt() {  ## Link existing child repos into the system: generate their docs/ai/SYSTEM_LINK.md

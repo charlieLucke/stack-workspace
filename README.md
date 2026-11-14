@@ -36,7 +36,7 @@ docs/ai/              System-Level-Agenten-Hirn (siehe unten)
   CURRENT_TASK.md     Das aktive Feature, das Repos überspannt
   HANDOFF.md          System-Handoff: welche Repos bei welchem Commit
   IDEAS.md            Parkplatz
-  plans/              Opus-erstellte Pläne, die mehrere Repos koordinieren
+  plans/              Pläne, die mehrere Repos koordinieren
 contracts/            Maschinenlesbare Contracts (OpenAPI, JSON Schema, …)
 shared/               DRY-Konventionsfragmente, in jedes Child-Repo gezogen
 repos/                Geklonte Child-Repos (gitignored, jedes ein eigenes git-Repo)
@@ -60,10 +60,15 @@ examples/rag-system/  Ein vollständig ausgefülltes Beispielsystem
 
 ## Arbeiten mit KI-Tools
 
-Zuerst `CLAUDE.md` lesen (gespiegelt als `AGENTS.md` / `GEMINI.md`). Sie definiert die
+Zuerst `AGENTS.md` lesen (`CLAUDE.md` und `GEMINI.md` importieren sie nur). Sie definiert die
 **Multi-Repo-Betriebsregeln**, die über den eigenen Agenten-Regeln jedes Child-Repos liegen:
 Locate-before-editing via `ROUTING.md`, Contracts-are-Law, One-Feature-One-Plan und
-das System-Quality-Gate. Child-Repos behalten ihre eigene `CLAUDE.md` für lokale Arbeit.
+das System-Quality-Gate. Child-Repos behalten ihre eigene `AGENTS.md` für lokale Arbeit.
+
+Die Claude-Code-Hooks und das `.env`-Leseverbot eines Child-Repos (`repos/NAME/.claude/`) greifen
+nur, wenn Claude Code **in diesem Repo** gestartet wird, nicht vom Workspace-Root aus. Für die
+Umsetzung in einem Service deshalb dort starten; der Workspace-Root ist für Planung und
+Repo-übergreifende Arbeit.
 
 ## Lizenz
 
